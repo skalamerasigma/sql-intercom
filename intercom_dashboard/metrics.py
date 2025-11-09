@@ -61,6 +61,23 @@ def _is_within_business_hours(ts: int) -> bool:
 		return False
 
 
+def _is_updated_today(conv: Dict[str, Any], now_s: Optional[int] = None) -> bool:
+	"""
+	Returns True if the conversation was last updated today (in the business timezone).
+	"""
+	try:
+		updated_at = conv.get("updated_at")
+		if not updated_at:
+			return False
+		now = now_s or int(time.time())
+		now_dt = datetime.fromtimestamp(now, tz=timezone.utc).astimezone(LOCAL_TZ)
+		updated_dt = datetime.fromtimestamp(int(updated_at), tz=timezone.utc).astimezone(LOCAL_TZ)
+		# Check if updated_at is on the same day as today
+		return updated_dt.date() == now_dt.date()
+	except Exception:
+		return False
+
+
 def _extract_rating(conv: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 	# Intercom returns a `conversation_rating` object when present (OpenAPI shows numeric score)
 	rating = conv.get("conversation_rating")
@@ -143,20 +160,23 @@ def _compute_metrics_internal(
 	unassigned_open = [c for c in open_convs if _is_unassigned(c)]
 	waiting_first_reply = [c for c in open_convs if _is_waiting_for_first_reply(c)]
 
+	# Wait times: only include conversations updated today
 	wait_times = [
 		_age_minutes_from_waiting_since(c, now)
 		for c in waiting_first_reply
-		if _is_within_business_hours(c.get("waiting_since", 0))
+		if _is_updated_today(c, now)
+		and _is_within_business_hours(c.get("waiting_since", 0))
 	]
 	wait_times = [w for w in wait_times if w is not None]
 	avg_wait_time_min = statistics.mean(wait_times) if wait_times else 0.0
 	p95_wait_time_min = statistics.quantiles(wait_times, n=20)[18] if len(wait_times) >= 20 else (max(wait_times) if wait_times else 0.0)
 
-	# SLA adherence: among conversations that have received first admin reply
+	# SLA adherence: among conversations that have received first admin reply and were updated today
 	first_reply_samples = [
 		c
 		for c in conversations
 		if (c.get("team_assignee_id") == team_id)
+		and _is_updated_today(c, now)
 		and _is_within_business_hours((c.get("waiting_since") or 0))
 		and _is_within_business_hours(((c.get("statistics") or {}).get("first_admin_reply_at") or 0))
 	]
@@ -164,8 +184,9 @@ def _compute_metrics_internal(
 	sla_results = [s for s in sla_results if s is not None]
 	sla_adherence_pct = (sum(1 for s in sla_results if s) / len(sla_results) * 100.0) if sla_results else 0.0
 
-	# Ratings
-	ratings = [_extract_rating(c) for c in conversations]
+	# Ratings: only include conversations updated today
+	today_conversations = [c for c in conversations if _is_updated_today(c, now)]
+	ratings = [_extract_rating(c) for c in today_conversations]
 	ratings = [r for r in ratings if r]
 	num_rated = len(ratings)
 	# Prefer numeric score when available (1-5). Fallback to string rating if present.
