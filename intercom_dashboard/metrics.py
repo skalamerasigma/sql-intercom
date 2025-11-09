@@ -109,8 +109,9 @@ def compute_metrics(
 	admins: List[Dict[str, Any]],
 	team_id: int,
 	now_s: Optional[int] = None,
+	today_only: bool = True,
 ) -> Dict[str, Any]:
-	return _compute_metrics_internal(conversations, admins, team_id, now_s)
+	return _compute_metrics_internal(conversations, admins, team_id, now_s, today_only=today_only)
 
 
 def compute_metrics_with_overrides(
@@ -125,6 +126,7 @@ def compute_metrics_with_overrides(
 	agent_assignment_snoozed_override: Optional[Dict[str, int]] = None,
 	agent_assignment_waiting_override: Optional[Dict[str, int]] = None,
 	now_s: Optional[int] = None,
+	today_only: bool = True,
 ) -> Dict[str, Any]:
 	return _compute_metrics_internal(
 		conversations,
@@ -138,6 +140,7 @@ def compute_metrics_with_overrides(
 		agent_assignment_open_override,
 		agent_assignment_snoozed_override,
 		agent_assignment_waiting_override,
+		today_only=today_only,
 	)
 
 
@@ -153,40 +156,84 @@ def _compute_metrics_internal(
 	agent_assignment_open_override: Optional[Dict[str, int]] = None,
 	agent_assignment_snoozed_override: Optional[Dict[str, int]] = None,
 	agent_assignment_waiting_override: Optional[Dict[str, int]] = None,
+	today_only: bool = True,
 ) -> Dict[str, Any]:
 	now = now_s or int(time.time())
 	open_convs = [c for c in conversations if _is_open(c) and c.get("team_assignee_id") == team_id]
 	snoozed_convs = [c for c in conversations if _is_snoozed(c) and c.get("team_assignee_id") == team_id]
 	unassigned_open = [c for c in open_convs if _is_unassigned(c)]
 	waiting_first_reply = [c for c in open_convs if _is_waiting_for_first_reply(c)]
-
-	# Wait times: only include conversations updated today
-	wait_times = [
-		_age_minutes_from_waiting_since(c, now)
+	
+	# Filter priority waiting conversations
+	priority_waiting = [c for c in waiting_first_reply if c.get("priority") == "priority"]
+	
+	# Get top 5 longest waiting conversations
+	waiting_with_times = [
+		{
+			"conversation": c,
+			"wait_minutes": _age_minutes_from_waiting_since(c, now) or 0.0,
+		}
 		for c in waiting_first_reply
-		if _is_updated_today(c, now)
-		and _is_within_business_hours(c.get("waiting_since", 0))
 	]
+	waiting_with_times.sort(key=lambda x: x["wait_minutes"], reverse=True)
+	top_5_waiting = waiting_with_times[:5]
+	
+	# Get priority waiting conversations with details
+	priority_waiting_with_times = [
+		{
+			"conversation": c,
+			"wait_minutes": _age_minutes_from_waiting_since(c, now) or 0.0,
+		}
+		for c in priority_waiting
+	]
+	priority_waiting_with_times.sort(key=lambda x: x["wait_minutes"], reverse=True)
+
+	# Wait times: filter based on today_only flag
+	if today_only:
+		wait_times = [
+			_age_minutes_from_waiting_since(c, now)
+			for c in waiting_first_reply
+			if _is_updated_today(c, now)
+			and _is_within_business_hours(c.get("waiting_since", 0))
+		]
+	else:
+		wait_times = [
+			_age_minutes_from_waiting_since(c, now)
+			for c in waiting_first_reply
+			if _is_within_business_hours(c.get("waiting_since", 0))
+		]
 	wait_times = [w for w in wait_times if w is not None]
 	avg_wait_time_min = statistics.mean(wait_times) if wait_times else 0.0
 	p95_wait_time_min = statistics.quantiles(wait_times, n=20)[18] if len(wait_times) >= 20 else (max(wait_times) if wait_times else 0.0)
 
-	# SLA adherence: among conversations that have received first admin reply and were updated today
-	first_reply_samples = [
-		c
-		for c in conversations
-		if (c.get("team_assignee_id") == team_id)
-		and _is_updated_today(c, now)
-		and _is_within_business_hours((c.get("waiting_since") or 0))
-		and _is_within_business_hours(((c.get("statistics") or {}).get("first_admin_reply_at") or 0))
-	]
+	# SLA adherence: filter based on today_only flag
+	if today_only:
+		first_reply_samples = [
+			c
+			for c in conversations
+			if (c.get("team_assignee_id") == team_id)
+			and _is_updated_today(c, now)
+			and _is_within_business_hours((c.get("waiting_since") or 0))
+			and _is_within_business_hours(((c.get("statistics") or {}).get("first_admin_reply_at") or 0))
+		]
+	else:
+		first_reply_samples = [
+			c
+			for c in conversations
+			if (c.get("team_assignee_id") == team_id)
+			and _is_within_business_hours((c.get("waiting_since") or 0))
+			and _is_within_business_hours(((c.get("statistics") or {}).get("first_admin_reply_at") or 0))
+		]
 	sla_results = [_first_response_met_sla(c, SLA_FIRST_RESPONSE_MINUTES) for c in first_reply_samples]
 	sla_results = [s for s in sla_results if s is not None]
 	sla_adherence_pct = (sum(1 for s in sla_results if s) / len(sla_results) * 100.0) if sla_results else 0.0
 
-	# Ratings: only include conversations updated today
-	today_conversations = [c for c in conversations if _is_updated_today(c, now)]
-	ratings = [_extract_rating(c) for c in today_conversations]
+	# Ratings: filter based on today_only flag
+	if today_only:
+		ratings_conversations = [c for c in conversations if _is_updated_today(c, now)]
+	else:
+		ratings_conversations = conversations
+	ratings = [_extract_rating(c) for c in ratings_conversations]
 	ratings = [r for r in ratings if r]
 	num_rated = len(ratings)
 	# Prefer numeric score when available (1-5). Fallback to string rating if present.
@@ -241,6 +288,51 @@ def _compute_metrics_internal(
 			}
 		)
 
+	# Build admin lookup map
+	admin_map = {str(a.get("id")): a for a in admins}
+	
+	# Format top 5 waiting conversations with admin info
+	top_5_formatted = []
+	for item in top_5_waiting:
+		conv = item["conversation"]
+		admin_id = str(conv.get("admin_assignee_id") or "")
+		admin = admin_map.get(admin_id) if admin_id else None
+		conv_id = str(conv.get("id") or "")
+		top_5_formatted.append({
+			"conversation_id": conv_id,
+			"wait_minutes": round(item["wait_minutes"], 1),
+			"admin_name": admin.get("name") if admin else None,
+			"admin_email": admin.get("email") if admin else None,
+			"assigned": bool(admin_id and admin),
+			"intercom_url": f"https://app.intercom.com/a/inbox/{conv_id}" if conv_id else None,
+		})
+	
+	# Format priority waiting conversations with admin info
+	priority_waiting_formatted = []
+	for item in priority_waiting_with_times:
+		conv = item["conversation"]
+		admin_id = str(conv.get("admin_assignee_id") or "")
+		admin = admin_map.get(admin_id) if admin_id else None
+		conv_id = str(conv.get("id") or "")
+		# Get contact/author info
+		source = conv.get("source", {})
+		author = source.get("author", {}) if isinstance(source, dict) else {}
+		contacts = conv.get("contacts", {})
+		contact_list = contacts.get("contacts", []) if isinstance(contacts, dict) else []
+		contact = contact_list[0] if contact_list else {}
+		
+		priority_waiting_formatted.append({
+			"conversation_id": conv_id,
+			"wait_minutes": round(item["wait_minutes"], 1),
+			"admin_name": admin.get("name") if admin else None,
+			"admin_email": admin.get("email") if admin else None,
+			"assigned": bool(admin_id and admin),
+			"intercom_url": f"https://app.intercom.com/a/inbox/{conv_id}" if conv_id else None,
+			"contact_name": author.get("name") or contact.get("name") or "Unknown",
+			"contact_email": author.get("email") or contact.get("email") or None,
+			"title": conv.get("title") or source.get("subject") or "No subject",
+		})
+	
 	return {
 		"generated_at": now,
 		"team_id": team_id,
@@ -263,6 +355,11 @@ def _compute_metrics_internal(
 			"num_rated": num_rated,
 			"positive": num_positive,
 			"negative": num_negative,
+		},
+		"top_5_waiting": top_5_formatted,
+		"priority_waiting": {
+			"count": len(priority_waiting),
+			"conversations": priority_waiting_formatted,
 		},
 		"agents": agents,
 		"agent_assignment_open": agent_assignment_open,

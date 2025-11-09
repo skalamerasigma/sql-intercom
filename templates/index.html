@@ -10,6 +10,9 @@
 	<header class="header">
 		<img src="/static/sql-logo.svg" alt="SQL Logo" class="header-logo-left" />
 		<div class="header-right">
+			{% if demo_mode %}
+			<div class="demo-badge">DEMO MODE</div>
+			{% endif %}
 			<button id="refresh-btn" class="refresh-button" title="Refresh metrics">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<polyline points="23 4 23 10 17 10"></polyline>
@@ -27,12 +30,36 @@
 	<main class="container">
 		<div class="nav-buttons">
 			<a href="/tse" class="nav-button">View TSE Table</a>
+			<label class="toggle-switch">
+				<input type="checkbox" id="today-only-toggle" checked>
+				<span class="toggle-slider"></span>
+				<span class="toggle-label">Today Only</span>
+			</label>
 		</div>
 		
 		<section class="kpis">
 			<div class="kpi-card kpi-waiting kpi-waiting-featured" id="kpi-waiting-card">
-				<div class="kpi-title">Waiting 1st Reply</div>
-				<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
+				<div class="kpi-waiting-content">
+					<div class="kpi-waiting-left">
+						<div class="kpi-title">Waiting 1st Reply</div>
+						<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
+						<div class="priority-count-wrapper">
+							<span class="priority-count-label" id="priority-count-label">—</span>
+							<div class="tooltip" id="priority-tooltip">
+								<div class="tooltip-header">Priority Accounts</div>
+								<div class="tooltip-content" id="priority-tooltip-content">
+									<div class="tooltip-loading">Loading...</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="kpi-waiting-right">
+						<div class="top-waiting-title">Longest Wait Times</div>
+						<div class="top-waiting-list" id="top-waiting-list">
+							<div class="top-waiting-item">—</div>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div class="kpi-card kpi-open">
 				<div class="kpi-title">Open</div>
@@ -61,6 +88,24 @@
 						<div class="metric-value" id="wait-p95">—</div>
 					</div>
 				</div>
+				<div class="chart-container">
+					<svg class="mini-chart" id="wait-times-chart" viewBox="0 0 200 75" preserveAspectRatio="none">
+						<defs>
+							<linearGradient id="waitGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+								<stop offset="0%" style="stop-color:var(--accent-2);stop-opacity:0.3" />
+								<stop offset="100%" style="stop-color:var(--accent-2);stop-opacity:0" />
+							</linearGradient>
+						</defs>
+						<path class="chart-area" id="wait-times-area" fill="url(#waitGradient)" />
+						<path class="chart-line" id="wait-times-line" stroke="var(--accent-2)" fill="none" stroke-width="2" />
+						<g id="wait-times-points"></g>
+						<g id="wait-times-tooltip" class="chart-tooltip" style="display: none;">
+							<rect class="tooltip-bg" rx="4" />
+							<text class="tooltip-text"></text>
+						</g>
+						<g id="wait-times-axis" class="chart-axis"></g>
+					</svg>
+				</div>
 			</div>
 			<div class="panel">
 				<div class="panel-title">SLA (First Response ≤ <span id="sla-min">—</span>m)</div>
@@ -73,6 +118,24 @@
 						<div class="metric-label">Sample</div>
 						<div class="metric-value" id="sla-sample">—</div>
 					</div>
+				</div>
+				<div class="chart-container">
+					<svg class="mini-chart" id="sla-chart" viewBox="0 0 200 75" preserveAspectRatio="none">
+						<defs>
+							<linearGradient id="slaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+								<stop offset="0%" style="stop-color:var(--accent-7);stop-opacity:0.3" />
+								<stop offset="100%" style="stop-color:var(--accent-7);stop-opacity:0" />
+							</linearGradient>
+						</defs>
+						<path class="chart-area" id="sla-area" fill="url(#slaGradient)" />
+						<path class="chart-line" id="sla-line" stroke="var(--accent-7)" fill="none" stroke-width="2" />
+						<g id="sla-points"></g>
+						<g id="sla-tooltip" class="chart-tooltip" style="display: none;">
+							<rect class="tooltip-bg" rx="4" />
+							<text class="tooltip-text"></text>
+						</g>
+						<g id="sla-axis" class="chart-axis"></g>
+					</svg>
 				</div>
 			</div>
 			<div class="panel">
@@ -122,9 +185,305 @@
 	<script>
 		const teamId = {{ team_id }};
 		const refreshIntervalSeconds = {{ refresh_interval }};
+		
+		// Time-series data storage for charts
+		const chartData = {
+			waitTimes: [],
+			sla: [],
+			dayKey: null,
+		};
+		
+		// Initialize day key and clear old data
+		function initChartData() {
+			const today = new Date().toDateString();
+			if (chartData.dayKey !== today) {
+				chartData.waitTimes = [];
+				chartData.sla = [];
+				chartData.dayKey = today;
+			}
+		}
+		
+		// Generate initial demo data points for charts
+		function generateInitialDemoChartData() {
+			{% if demo_mode %}
+			const now = Date.now();
+			const hoursAgo = 8; // Generate data for last 8 hours
+			const pointsPerHour = 2; // 2 points per hour = 16 total points
+			const totalPoints = hoursAgo * pointsPerHour;
+			
+			// Generate wait times data (trending upward with some variation)
+			let baseWaitTime = 5.0;
+			for (let i = 0; i < totalPoints; i++) {
+				const hoursBack = (totalPoints - i - 1) / pointsPerHour;
+				const timestamp = now - (hoursBack * 60 * 60 * 1000);
+				// Add some trend and random variation
+				const trend = (i / totalPoints) * 10; // Gradual increase
+				const variation = (Math.random() - 0.5) * 4; // Random variation
+				const value = Math.max(0.5, baseWaitTime + trend + variation);
+				chartData.waitTimes.push({ value, timestamp });
+			}
+			
+			// Generate SLA data (mostly high with occasional dips)
+			let baseSLA = 95.0;
+			for (let i = 0; i < totalPoints; i++) {
+				const hoursBack = (totalPoints - i - 1) / pointsPerHour;
+				const timestamp = now - (hoursBack * 60 * 60 * 1000);
+				// Add some variation but keep it mostly high
+				const variation = (Math.random() - 0.5) * 8;
+				const dip = Math.random() < 0.2 ? -15 : 0; // Occasional dip
+				const value = Math.max(70, Math.min(100, baseSLA + variation + dip));
+				chartData.sla.push({ value, timestamp });
+			}
+			
+			// Draw charts with initial data
+			if (chartData.waitTimes.length > 0) {
+				drawChart('wait-times-chart', chartData.waitTimes);
+			}
+			if (chartData.sla.length > 0) {
+				drawChart('sla-chart', chartData.sla, 100);
+			}
+			{% endif %}
+		}
+		
+		// Add data point to chart
+		function addChartDataPoint(type, value, timestamp) {
+			if (value === null || value === undefined || isNaN(value)) return;
+			const data = chartData[type];
+			data.push({ value, timestamp: timestamp || Date.now() });
+			// Keep only last 50 points to prevent memory issues
+			if (data.length > 50) {
+				data.shift();
+			}
+		}
+		
+		// Draw line chart with hover tooltips
+		function drawChart(chartId, dataPoints, maxValue = null) {
+			const svg = document.getElementById(chartId);
+			if (!svg || !dataPoints || dataPoints.length === 0) {
+				// Hide chart if no data
+				if (svg) svg.style.display = 'none';
+				return;
+			}
+			svg.style.display = 'block';
+			
+			const width = 200;
+			const height = 75;
+			const padding = 2;
+			const axisHeight = 12;
+			const chartWidth = width - padding * 2;
+			const chartHeight = height - padding * 2 - axisHeight;
+			
+			// Calculate max value if not provided
+			if (!maxValue) {
+				const values = dataPoints.map(d => d.value).filter(v => !isNaN(v) && v !== null && v !== undefined);
+				if (values.length === 0) {
+					svg.style.display = 'none';
+					return;
+				}
+				maxValue = Math.max(...values);
+				// Add 10% padding to max value for better visualization, but ensure min is 1
+				maxValue = Math.max(maxValue * 1.1, 1);
+			}
+			
+			// Build path strings and collect point coordinates
+			let linePath = '';
+			let areaPath = '';
+			const pointCount = dataPoints.length;
+			const points = [];
+			
+			// Handle single point case
+			if (pointCount === 1) {
+				const x = padding + chartWidth / 2;
+				const y = height - padding - axisHeight - (dataPoints[0].value / maxValue) * chartHeight;
+				linePath = `M ${x} ${y} L ${x} ${y}`;
+				const bottomY = height - padding - axisHeight;
+				areaPath = `M ${padding} ${bottomY} L ${x} ${y} L ${padding + chartWidth} ${bottomY} Z`;
+				points.push({ x, y, value: dataPoints[0].value });
+			} else {
+				dataPoints.forEach((point, index) => {
+					const x = padding + (index / (pointCount - 1)) * chartWidth;
+					const y = height - padding - axisHeight - (point.value / maxValue) * chartHeight;
+					points.push({ x, y, value: point.value });
+					
+					const bottomY = height - padding - axisHeight;
+					if (index === 0) {
+						linePath = `M ${x} ${y}`;
+						areaPath = `M ${x} ${bottomY} L ${x} ${y}`;
+					} else {
+						linePath += ` L ${x} ${y}`;
+						areaPath += ` L ${x} ${y}`;
+					}
+				});
+				
+				// Close area path
+				const lastX = padding + chartWidth;
+				const bottomY = height - padding - axisHeight;
+				areaPath += ` L ${lastX} ${bottomY} Z`;
+			}
+			
+			// Update SVG paths
+			const lineEl = svg.querySelector('.chart-line');
+			const areaEl = svg.querySelector('.chart-area');
+			if (lineEl) lineEl.setAttribute('d', linePath);
+			if (areaEl) areaEl.setAttribute('d', areaPath);
+			
+			// Create invisible hover zones and tooltip
+			const pointsGroupId = chartId.replace('-chart', '-points');
+			const tooltipId = chartId.replace('-chart', '-tooltip');
+			const pointsGroup = svg.querySelector(`#${pointsGroupId}`);
+			const tooltip = svg.querySelector(`#${tooltipId}`);
+			
+			if (pointsGroup) {
+				pointsGroup.innerHTML = '';
+				
+				points.forEach((point, index) => {
+					// Create invisible circle for hover detection
+					const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+					circle.setAttribute('cx', point.x);
+					circle.setAttribute('cy', point.y);
+					circle.setAttribute('r', '8');
+					circle.setAttribute('fill', 'transparent');
+					circle.setAttribute('stroke', 'none');
+					circle.setAttribute('class', 'chart-hover-zone');
+					circle.style.cursor = 'pointer';
+					
+					// Add hover events
+					circle.addEventListener('mouseenter', (e) => {
+						if (tooltip) {
+							const isWaitTimes = chartId.includes('wait');
+							const value = isWaitTimes 
+								? `${point.value.toFixed(1)}m`
+								: `${point.value.toFixed(1)}%`;
+							const textEl = tooltip.querySelector('.tooltip-text');
+							const bgEl = tooltip.querySelector('.tooltip-bg');
+							if (textEl) {
+								textEl.textContent = value;
+								
+								// Get text dimensions after rendering
+								const textBBox = textEl.getBBox();
+								const textWidth = textBBox.width;
+								const textHeight = textBBox.height;
+								
+								// Position tooltip above the point, centered
+								const tooltipX = point.x - (textWidth / 2);
+								const tooltipY = point.y - textHeight - 8;
+								
+								// Set background position and size
+								if (bgEl) {
+									bgEl.setAttribute('x', -textWidth / 2 - 4);
+									bgEl.setAttribute('y', -textHeight - 8);
+									bgEl.setAttribute('width', textWidth + 8);
+									bgEl.setAttribute('height', textHeight + 4);
+								}
+								
+								// Position text centered
+								textEl.setAttribute('x', 0);
+								textEl.setAttribute('y', -textHeight / 2 - 6);
+								
+								// Position the tooltip group
+								tooltip.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+							}
+							
+							tooltip.style.display = 'block';
+						}
+					});
+					
+					circle.addEventListener('mouseleave', () => {
+						if (tooltip) tooltip.style.display = 'none';
+					});
+					
+					pointsGroup.appendChild(circle);
+				});
+			}
+			
+			// Draw x-axis labels
+			const axisGroup = svg.querySelector(`#${chartId.replace('-chart', '-axis')}`);
+			if (axisGroup && pointCount > 1) {
+				axisGroup.innerHTML = '';
+				
+				// Show fewer labels (3 max) to prevent overlap
+				const numLabels = Math.min(3, pointCount);
+				const labelIndices = [];
+				for (let i = 0; i < numLabels; i++) {
+					const idx = Math.round((i / (numLabels - 1)) * (pointCount - 1));
+					labelIndices.push(idx);
+				}
+				
+				labelIndices.forEach((idx) => {
+					const point = dataPoints[idx];
+					if (!point) return;
+					
+					// Position with padding to prevent edge cutoff
+					const xPos = padding + (idx / (pointCount - 1)) * chartWidth;
+					// Ensure labels don't go outside bounds
+					const x = Math.max(padding + 8, Math.min(width - padding - 8, xPos));
+					const y = height - padding - 4; // Position lower, closer to bottom
+					
+					// Format time label
+					let label = '';
+					if (point.timestamp) {
+						const date = new Date(point.timestamp);
+						const now = new Date();
+						const hoursDiff = (now - date) / (1000 * 60 * 60);
+						
+						if (hoursDiff < 0.1) {
+							label = 'Now';
+						} else if (hoursDiff < 1) {
+							const mins = Math.floor(hoursDiff * 60);
+							label = `${mins}m`;
+						} else if (hoursDiff < 24) {
+							const hours = Math.floor(hoursDiff);
+							label = `${hours}h`;
+						} else {
+							const days = Math.floor(hoursDiff / 24);
+							label = `${days}d`;
+						}
+					} else {
+						// Fallback: show index-based label
+						const hoursBack = Math.floor((pointCount - idx - 1) / 2);
+						label = hoursBack > 0 ? `${hoursBack}h` : 'Now';
+					}
+					
+					const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+					text.setAttribute('x', x);
+					text.setAttribute('y', y);
+					text.setAttribute('class', 'chart-axis-label');
+					
+					// Set text anchor based on position
+					if (idx === 0) {
+						text.setAttribute('text-anchor', 'start');
+						text.setAttribute('x', padding + 4);
+					} else if (idx === pointCount - 1 || idx === labelIndices[labelIndices.length - 1]) {
+						text.setAttribute('text-anchor', 'end');
+						text.setAttribute('x', width - padding - 4);
+					} else {
+						text.setAttribute('text-anchor', 'middle');
+					}
+					
+					text.textContent = label;
+					axisGroup.appendChild(text);
+				});
+			}
+		}
+		
+		// Update all charts
+		function updateCharts(waitAvg, slaPct) {
+			initChartData();
+			
+			if (waitAvg !== null && waitAvg !== undefined && !isNaN(waitAvg)) {
+				addChartDataPoint('waitTimes', waitAvg);
+				drawChart('wait-times-chart', chartData.waitTimes);
+			}
+			
+			if (slaPct !== null && slaPct !== undefined && !isNaN(slaPct)) {
+				addChartDataPoint('sla', slaPct);
+				drawChart('sla-chart', chartData.sla, 100); // SLA is percentage, max is 100
+			}
+		}
 
 		async function fetchMetrics() {
-			const res = await fetch(`/api/metrics?team_id=${teamId}`, { cache: "no-store" });
+			const todayOnly = document.getElementById("today-only-toggle").checked;
+			const res = await fetch(`/api/metrics?team_id=${teamId}&today_only=${todayOnly}`, { cache: "no-store" });
 			let payload = null;
 			try { payload = await res.json(); } catch (_) { /* ignore non-JSON */ }
 			if (!res.ok) {
@@ -196,9 +555,74 @@
 					waitingCard.classList.add("kpi-waiting-red");
 					waitingValueEl.classList.add("kpi-waiting-red");
 				}
+				
+				// Update top 5 waiting conversations list
+				const topWaitingList = document.getElementById("top-waiting-list");
+				const top5 = data.top_5_waiting || [];
+				if (top5.length === 0) {
+					topWaitingList.innerHTML = '<div class="top-waiting-item muted">No waiting conversations</div>';
+				} else {
+					topWaitingList.innerHTML = top5.map(item => {
+						const adminInfo = item.assigned && item.admin_name 
+							? `<span class="top-waiting-admin">${item.admin_name}</span>`
+							: '<span class="top-waiting-admin unassigned">Unassigned</span>';
+						return `
+							<div class="top-waiting-item">
+								<span class="top-waiting-time">${item.wait_minutes}m</span>
+								${adminInfo}
+							</div>
+						`;
+					}).join('');
+				}
+				
+				// Update priority waiting count and tooltip
+				const priorityData = data.priority_waiting || { count: 0, conversations: [] };
+				const priorityCount = priorityData.count || 0;
+				const priorityLabel = document.getElementById("priority-count-label");
+				const priorityTooltip = document.getElementById("priority-tooltip");
+				const priorityTooltipContent = document.getElementById("priority-tooltip-content");
+				
+				if (priorityCount > 0) {
+					priorityLabel.textContent = `${priorityCount} priority account${priorityCount !== 1 ? 's' : ''}`;
+					priorityLabel.classList.add("has-priority");
+					
+					// Build tooltip content
+					const conversations = priorityData.conversations || [];
+					if (conversations.length > 0) {
+						priorityTooltipContent.innerHTML = conversations.map(conv => {
+							const adminInfo = conv.assigned && conv.admin_name 
+								? `Assigned to ${conv.admin_name}`
+								: 'Unassigned';
+							const contactInfo = conv.contact_email 
+								? `${conv.contact_name} (${conv.contact_email})`
+								: conv.contact_name;
+							return `
+								<a href="${conv.intercom_url}" target="_blank" class="tooltip-item">
+									<div class="tooltip-item-header">
+										<span class="tooltip-item-title">${conv.title}</span>
+										<span class="tooltip-item-time">${conv.wait_minutes}m</span>
+									</div>
+									<div class="tooltip-item-details">
+										<div class="tooltip-item-contact">${contactInfo}</div>
+										<div class="tooltip-item-admin">${adminInfo}</div>
+									</div>
+								</a>
+							`;
+						}).join('');
+					} else {
+						priorityTooltipContent.innerHTML = '<div class="tooltip-empty">No priority conversations</div>';
+					}
+				} else {
+					priorityLabel.textContent = "0 priority accounts";
+					priorityLabel.classList.remove("has-priority");
+					priorityTooltipContent.innerHTML = '<div class="tooltip-empty">No priority conversations</div>';
+				}
 
 				setText("wait-avg", data.wait_times.average_minutes + "m");
 				setText("wait-p95", data.wait_times.p95_minutes + "m");
+				
+				// Update charts
+				updateCharts(data.wait_times.average_minutes, data.sla.adherence_percent);
 
 				setText("sla-min", data.sla.first_response_minutes);
 				setText("sla-pct", data.sla.adherence_percent + "%");
@@ -223,7 +647,18 @@
 		document.getElementById("refresh-btn").addEventListener("click", () => {
 			hydrate();
 		});
+		
+		// Set up today-only toggle
+		document.getElementById("today-only-toggle").addEventListener("change", () => {
+			hydrate();
+		});
 
+		// Initialize charts on page load
+		initChartData();
+		
+		// Generate initial demo chart data if in demo mode
+		generateInitialDemoChartData();
+		
 		hydrate();
 		setInterval(hydrate, refreshIntervalSeconds * 1000);
 	</script>

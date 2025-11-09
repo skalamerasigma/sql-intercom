@@ -13,17 +13,23 @@ from fastapi.templating import Jinja2Templates
 from intercom_dashboard.config import (
 	REFRESH_INTERVAL_SECONDS,
 	TEAM_ID,
+	DEMO_MODE,
 )
 from intercom_dashboard.intercom_client import IntercomClient
 from intercom_dashboard.metrics import compute_metrics_with_overrides
+from intercom_dashboard.demo_data import generate_demo_metrics, generate_demo_admins, get_demo_agent_assignments, generate_demo_conversations
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-	client = IntercomClient()
-	app.state.ic_client = client
+	if not DEMO_MODE:
+		client = IntercomClient()
+		app.state.ic_client = client
+	else:
+		app.state.ic_client = None
 	yield
-	await client.aclose()
+	if not DEMO_MODE and app.state.ic_client:
+		await app.state.ic_client.aclose()
 
 
 app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
@@ -44,6 +50,7 @@ async def index(request: Request) -> HTMLResponse:
 			"request": request,
 			"team_id": TEAM_ID,
 			"refresh_interval": REFRESH_INTERVAL_SECONDS,
+			"demo_mode": DEMO_MODE,
 		},
 	)
 
@@ -56,19 +63,50 @@ async def tse_table(request: Request) -> HTMLResponse:
 			"request": request,
 			"team_id": TEAM_ID,
 			"refresh_interval": REFRESH_INTERVAL_SECONDS,
+			"demo_mode": DEMO_MODE,
 		},
 	)
 
 
 @app.get("/api/agents")
 async def agents() -> Dict[str, Any]:
+	if DEMO_MODE:
+		admins = generate_demo_admins()
+		return {"admins": admins}
+	
 	client: IntercomClient = app.state.ic_client
 	admins = await client.list_all_admins()
 	return {"admins": admins}
 
 
 @app.get("/api/metrics")
-async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
+async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, Any]:
+	if DEMO_MODE:
+		# Generate demo data
+		demo_metrics_base = generate_demo_metrics()
+		demo_admins = generate_demo_admins()
+		agent_assignments = get_demo_agent_assignments()
+		demo_conversations = generate_demo_conversations(today_only=today_only)
+		
+		# Compute metrics from demo conversations
+		demo_metrics = compute_metrics_with_overrides(
+			conversations=demo_conversations,
+			admins=demo_admins,
+			team_id=team_id,
+			snoozed_total_override=demo_metrics_base["totals"]["snoozed"],
+			open_total_override=demo_metrics_base["totals"]["open"],
+			unassigned_total_override=demo_metrics_base["totals"]["unassigned_open"],
+			waiting_total_override=demo_metrics_base["totals"]["waiting_first_reply"],
+			agent_assignment_open_override=agent_assignments["agent_assignment_open"],
+			agent_assignment_snoozed_override=agent_assignments["agent_assignment_snoozed"],
+			agent_assignment_waiting_override=agent_assignments["agent_assignment_waiting"],
+			today_only=today_only,
+		)
+		# Override with demo-specific data
+		demo_metrics["top_5_waiting"] = demo_metrics_base["top_5_waiting"]
+		demo_metrics["priority_waiting"] = demo_metrics_base["priority_waiting"]
+		return demo_metrics
+	
 	client: IntercomClient = app.state.ic_client
 	try:
 		# Fetch open conversations as a SAMPLE plus total count; get other totals fast.
@@ -76,9 +114,10 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		snoozed_count_task = asyncio.create_task(client.get_snoozed_count_for_team(team_id))
 		unassigned_count_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
 		waiting_count_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
+		waiting_convs_task = asyncio.create_task(client.get_waiting_conversations_for_team(team_id, max_pages=5))
 		admins_task = asyncio.create_task(client.list_all_admins())
-		(open_sample, open_total), snoozed_total, unassigned_total, waiting_total, admins = await asyncio.gather(
-			open_sample_task, snoozed_count_task, unassigned_count_task, waiting_count_task, admins_task
+		(open_sample, open_total), snoozed_total, unassigned_total, waiting_total, waiting_convs, admins = await asyncio.gather(
+			open_sample_task, snoozed_count_task, unassigned_count_task, waiting_count_task, waiting_convs_task, admins_task
 		)
 
 		# Build exact per-agent open counts (parallel)
@@ -100,8 +139,12 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		if not unassigned_total:
 			unassigned_total = max(0, int(open_total) - sum(agent_assignment_open.values()))
 
+		# Combine open_sample with waiting_convs for metrics computation
+		# (waiting_convs are a subset of open conversations, so we need both for accurate top 5)
+		all_convs_for_metrics = list({c.get("id"): c for c in open_sample + waiting_convs}.values())
+		
 		data = compute_metrics_with_overrides(
-			conversations=open_sample,
+			conversations=all_convs_for_metrics,
 			admins=admins,
 			team_id=team_id,
 			snoozed_total_override=snoozed_total,
@@ -111,6 +154,7 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 			agent_assignment_open_override=agent_assignment_open,
 			agent_assignment_snoozed_override=agent_assignment_snoozed,
 			agent_assignment_waiting_override=agent_assignment_waiting,
+			today_only=today_only,
 		)
 		return data
 	except Exception as exc:

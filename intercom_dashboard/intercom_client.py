@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import socket
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
@@ -19,20 +20,29 @@ class IntercomClient:
 			raise RuntimeError(
 				"Missing INTERCOM_BEARER_TOKEN. Set it in environment or .env."
 			)
+		if not INTERCOM_API_BASE:
+			raise RuntimeError(
+				f"Invalid INTERCOM_API_BASE: {INTERCOM_API_BASE}. Check your .env file or environment variables."
+			)
 		timeout = httpx.Timeout(
 			REQUEST_TIMEOUT_SECONDS, connect=min(REQUEST_TIMEOUT_SECONDS, 10.0)
 		)
-		self._client = client or httpx.AsyncClient(
-			base_url=INTERCOM_API_BASE,
-			headers={
-				"Authorization": f"Bearer {INTERCOM_BEARER_TOKEN}",
-				"Accept": "application/json",
-				"Content-Type": "application/json",
-				# Many search endpoints require the Unstable version header
-				"Intercom-Version": "Unstable",
-			},
-			timeout=timeout,
-		)
+		try:
+			self._client = client or httpx.AsyncClient(
+				base_url=INTERCOM_API_BASE,
+				headers={
+					"Authorization": f"Bearer {INTERCOM_BEARER_TOKEN}",
+					"Accept": "application/json",
+					"Content-Type": "application/json",
+					# Many search endpoints require the Unstable version header
+					"Intercom-Version": "Unstable",
+				},
+				timeout=timeout,
+			)
+		except Exception as e:
+			raise RuntimeError(
+				f"Failed to initialize HTTP client with base_url={INTERCOM_API_BASE}: {e}"
+			) from e
 
 	async def aclose(self) -> None:
 		await self._client.aclose()
@@ -54,9 +64,20 @@ class IntercomClient:
 				params["starting_after"] = starting_after
 			params["per_page"] = PER_PAGE
 
-			resp = await self._client.get("/admins", params=params)
-			resp.raise_for_status()
-			data = resp.json()
+			try:
+				resp = await self._client.get("/admins", params=params)
+				resp.raise_for_status()
+				data = resp.json()
+			except socket.gaierror as e:
+				raise RuntimeError(
+					f"DNS resolution failed for {INTERCOM_API_BASE}. "
+					f"Check your network connection and DNS settings. Error: {e}"
+				) from e
+			except httpx.ConnectError as e:
+				raise RuntimeError(
+					f"Failed to connect to {INTERCOM_API_BASE}. "
+					f"Check your network connection and firewall settings. Error: {e}"
+				) from e
 
 			# Response may be {type:"list", data:[...], pages:{...}}
 			items = data.get("data") or data.get("admins") or data
@@ -97,9 +118,20 @@ class IntercomClient:
 			"query": {"operator": "AND", "value": query_clauses},
 			"pagination": {"per_page": per_page},
 		}
-		resp = await self._client.post("/conversations/search", json=body)
-		resp.raise_for_status()
-		return resp.json()
+		try:
+			resp = await self._client.post("/conversations/search", json=body)
+			resp.raise_for_status()
+			return resp.json()
+		except socket.gaierror as e:
+			raise RuntimeError(
+				f"DNS resolution failed for {INTERCOM_API_BASE}. "
+				f"Check your network connection and DNS settings. Error: {e}"
+			) from e
+		except httpx.ConnectError as e:
+			raise RuntimeError(
+				f"Failed to connect to {INTERCOM_API_BASE}. "
+				f"Check your network connection and firewall settings. Error: {e}"
+			) from e
 
 	async def search_conversations_paginated(
 		self,
@@ -125,9 +157,20 @@ class IntercomClient:
 			if starting_after:
 				body["pagination"]["starting_after"] = starting_after
 
-			resp = await self._client.post("/conversations/search", json=body)
-			resp.raise_for_status()
-			data = resp.json()
+			try:
+				resp = await self._client.post("/conversations/search", json=body)
+				resp.raise_for_status()
+				data = resp.json()
+			except socket.gaierror as e:
+				raise RuntimeError(
+					f"DNS resolution failed for {INTERCOM_API_BASE}. "
+					f"Check your network connection and DNS settings. Error: {e}"
+				) from e
+			except httpx.ConnectError as e:
+				raise RuntimeError(
+					f"Failed to connect to {INTERCOM_API_BASE}. "
+					f"Check your network connection and firewall settings. Error: {e}"
+				) from e
 			last_pages = data.get("pages", {}) or {}
 
 			all_conversations.extend(data.get("conversations", []))
@@ -161,9 +204,20 @@ class IntercomClient:
 			}
 			if starting_after:
 				body["pagination"]["starting_after"] = starting_after
-			resp = await self._client.post("/conversations/search", json=body)
-			resp.raise_for_status()
-			data = resp.json()
+			try:
+				resp = await self._client.post("/conversations/search", json=body)
+				resp.raise_for_status()
+				data = resp.json()
+			except socket.gaierror as e:
+				raise RuntimeError(
+					f"DNS resolution failed for {INTERCOM_API_BASE}. "
+					f"Check your network connection and DNS settings. Error: {e}"
+				) from e
+			except httpx.ConnectError as e:
+				raise RuntimeError(
+					f"Failed to connect to {INTERCOM_API_BASE}. "
+					f"Check your network connection and firewall settings. Error: {e}"
+				) from e
 			if not total_count:
 				total_count = int(data.get("total_count") or 0)
 			collected.extend(data.get("conversations", []))
@@ -227,6 +281,19 @@ class IntercomClient:
 			per_page=1,
 		)
 		return int(data.get("total_count") or 0)
+	
+	async def get_waiting_conversations_for_team(self, team_id: int, max_pages: int = 5) -> List[Dict[str, Any]]:
+		"""Fetch waiting conversations (open, no first admin reply) for a team."""
+		conversations, _ = await self.search_conversations_sampled(
+			[
+				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
+				{"field": "state", "operator": "=", "value": "open"},
+				{"field": "statistics.first_admin_reply_at", "operator": "=", "value": None},
+			],
+			per_page=50,
+			max_pages=max_pages,
+		)
+		return conversations
 
 	async def count_open_for_admin(self, team_id: int, admin_id: str | int) -> int:
 		data = await self.search_conversations_one_page(
