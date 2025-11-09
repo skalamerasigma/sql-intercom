@@ -66,6 +66,7 @@
 								</div>
 							</div>
 						</div>
+						<div class="kpi-waiting-timestamp" id="kpi-waiting-timestamp">—</div>
 					</div>
 					<div class="kpi-waiting-divider"></div>
 					<div class="kpi-waiting-right">
@@ -783,6 +784,14 @@
 			try {
 				const [data, adminsData, capacityData] = await Promise.all([fetchMetrics(), fetchAdmins(), fetchCapacity()]);
 				document.getElementById("error").style.display = "none";
+				
+				// Update timestamp
+				const timestampEl = document.getElementById("kpi-waiting-timestamp");
+				if (timestampEl) {
+					const now = new Date();
+					const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+					timestampEl.textContent = `Last updated: ${timeStr}`;
+				}
 
 				// Update TSE availability counts
 				updateTSEAvailability(adminsData.admins || []);
@@ -811,19 +820,22 @@
 					waitingValueEl.classList.add("kpi-waiting-red");
 				}
 				
-				// Update top 5 waiting conversations list
+				// Update top 10 waiting conversations list
 				const topWaitingList = document.getElementById("top-waiting-list");
-				const top5 = data.top_5_waiting || [];
-				if (top5.length === 0) {
+				const top10 = data.top_10_waiting || [];
+				if (top10.length === 0) {
 					topWaitingList.innerHTML = '<div class="top-waiting-item muted">No waiting conversations</div>';
 				} else {
-					topWaitingList.innerHTML = top5.map(item => {
+					topWaitingList.innerHTML = top10.map(item => {
 						const adminInfo = item.assigned && item.admin_name 
 							? `<span class="top-waiting-admin">${item.admin_name}</span>`
 							: '<span class="top-waiting-admin unassigned">Unassigned</span>';
+						const priorityBadge = item.priority ? '<span class="top-waiting-priority-badge">PRIORITY</span>' : '';
+						const priorityClass = item.priority ? ' top-waiting-item-priority' : '';
 						return `
-							<div class="top-waiting-item">
+							<div class="top-waiting-item${priorityClass}">
 								<span class="top-waiting-time">${item.wait_minutes}m</span>
+								${priorityBadge}
 								${adminInfo}
 							</div>
 						`;

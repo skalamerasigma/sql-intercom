@@ -104,7 +104,7 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 			today_only=today_only,
 		)
 		# Override with demo-specific data
-		demo_metrics["top_5_waiting"] = demo_metrics_base["top_5_waiting"]
+		demo_metrics["top_10_waiting"] = demo_metrics_base["top_10_waiting"]
 		demo_metrics["priority_waiting"] = demo_metrics_base["priority_waiting"]
 		return demo_metrics
 	
@@ -115,7 +115,7 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		snoozed_count_task = asyncio.create_task(client.get_snoozed_count_for_team(team_id))
 		unassigned_count_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
 		waiting_count_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
-		waiting_convs_task = asyncio.create_task(client.get_waiting_conversations_for_team(team_id, max_pages=5))
+		waiting_convs_task = asyncio.create_task(client.get_waiting_conversations_for_team(team_id, max_pages=10))
 		admins_task = asyncio.create_task(client.list_all_admins())
 		(open_sample, open_total), snoozed_total, unassigned_total, waiting_total, waiting_convs, admins = await asyncio.gather(
 			open_sample_task, snoozed_count_task, unassigned_count_task, waiting_count_task, waiting_convs_task, admins_task

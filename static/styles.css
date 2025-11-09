@@ -255,6 +255,14 @@ body {
 	align-items: center;
 	gap: 8px;
 }
+.kpi-waiting-timestamp {
+	font-size: 11px;
+	opacity: 0.5;
+	margin-top: 64px;
+	padding-top: 0;
+	color: var(--text);
+	text-align: center;
+}
 .priority-count-wrapper {
 	position: relative;
 	margin-top: 0;
@@ -397,6 +405,14 @@ body {
 	font-size: 13px;
 	padding: 6px 0;
 	border-bottom: 1px solid rgba(255,255,255,0.05);
+	gap: 8px;
+}
+.top-waiting-item-priority {
+	background: rgba(253, 135, 137, 0.1);
+	border-left: 3px solid var(--accent-4);
+	padding-left: 8px;
+	border-radius: 4px;
+	margin: 2px 0;
 }
 .top-waiting-item:last-child {
 	border-bottom: none;
@@ -404,14 +420,28 @@ body {
 .top-waiting-time {
 	font-weight: 700;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	flex-shrink: 0;
+}
+.top-waiting-priority-badge {
+	background: var(--accent-4);
+	color: var(--card);
+	font-size: 9px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	padding: 2px 6px;
+	border-radius: 3px;
+	flex-shrink: 0;
 }
 .top-waiting-admin {
 	font-size: 12px;
 	opacity: 0.8;
+	margin-left: auto;
 }
 .top-waiting-admin.unassigned {
 	color: var(--accent-6);
 	opacity: 1;
+	margin-bottom: 0;
 }
 .kpi-title {
 	font-size: 12px;
@@ -817,5 +847,6 @@ body {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 }
-
-
+.kpi-waiting-timestamp {
+	margin-top: 100px;
+}

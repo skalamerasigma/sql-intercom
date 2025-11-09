@@ -167,7 +167,7 @@ def _compute_metrics_internal(
 	# Filter priority waiting conversations
 	priority_waiting = [c for c in waiting_first_reply if c.get("priority") == "priority"]
 	
-	# Get top 5 longest waiting conversations
+	# Get top 10 longest waiting conversations
 	waiting_with_times = [
 		{
 			"conversation": c,
@@ -176,7 +176,7 @@ def _compute_metrics_internal(
 		for c in waiting_first_reply
 	]
 	waiting_with_times.sort(key=lambda x: x["wait_minutes"], reverse=True)
-	top_5_waiting = waiting_with_times[:5]
+	top_10_waiting = waiting_with_times[:10]
 	
 	# Get priority waiting conversations with details
 	priority_waiting_with_times = [
@@ -291,19 +291,21 @@ def _compute_metrics_internal(
 	# Build admin lookup map
 	admin_map = {str(a.get("id")): a for a in admins}
 	
-	# Format top 5 waiting conversations with admin info
-	top_5_formatted = []
-	for item in top_5_waiting:
+	# Format top 10 waiting conversations with admin info
+	top_10_formatted = []
+	for item in top_10_waiting:
 		conv = item["conversation"]
 		admin_id = str(conv.get("admin_assignee_id") or "")
 		admin = admin_map.get(admin_id) if admin_id else None
 		conv_id = str(conv.get("id") or "")
-		top_5_formatted.append({
+		is_priority = conv.get("priority") == "priority"
+		top_10_formatted.append({
 			"conversation_id": conv_id,
 			"wait_minutes": round(item["wait_minutes"], 1),
 			"admin_name": admin.get("name") if admin else None,
 			"admin_email": admin.get("email") if admin else None,
 			"assigned": bool(admin_id and admin),
+			"priority": is_priority,
 			"intercom_url": f"https://app.intercom.com/a/inbox/{conv_id}" if conv_id else None,
 		})
 	
@@ -356,7 +358,7 @@ def _compute_metrics_internal(
 			"positive": num_positive,
 			"negative": num_negative,
 		},
-		"top_5_waiting": top_5_formatted,
+		"top_10_waiting": top_10_formatted,
 		"priority_waiting": {
 			"count": len(priority_waiting),
 			"conversations": priority_waiting_formatted,

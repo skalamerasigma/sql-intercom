@@ -35,24 +35,26 @@ def generate_demo_metrics() -> Dict[str, Any]:
 	num_positive = random.randint(int(num_rated * 0.6), num_rated)
 	num_negative = num_rated - num_positive
 	
-	# Generate top 5 waiting conversations
-	top_5_waiting = []
-	for i in range(5):
+	# Generate top 10 waiting conversations
+	top_10_waiting = []
+	for i in range(10):
 		wait_minutes = round(random.uniform(5, 45), 1)
 		assigned = random.choice([True, False])
+		is_priority = random.choice([True, False, False])  # ~33% chance of being priority
 		admin_name = random.choice([
 			"Erica Chase", "Stipo Josipovic", "Alex Johnson", 
 			"Sarah Martinez", "Mike Chen", None
 		]) if assigned else None
-		top_5_waiting.append({
+		top_10_waiting.append({
 			"conversation_id": f"demo_conv_{i+1}",
 			"wait_minutes": wait_minutes,
 			"admin_name": admin_name,
 			"admin_email": f"{admin_name.lower().replace(' ', '.')}@sigmacomputing.com" if admin_name else None,
 			"assigned": assigned,
+			"priority": is_priority,
 			"intercom_url": f"https://app.intercom.com/a/inbox/demo_conv_{i+1}",
 		})
-	top_5_waiting.sort(key=lambda x: x["wait_minutes"], reverse=True)
+	top_10_waiting.sort(key=lambda x: x["wait_minutes"], reverse=True)
 	
 	# Generate priority waiting conversations
 	priority_count = random.randint(2, 8)
@@ -113,7 +115,7 @@ def generate_demo_metrics() -> Dict[str, Any]:
 			"positive": num_positive,
 			"negative": num_negative,
 		},
-		"top_5_waiting": top_5_waiting,
+		"top_10_waiting": top_10_waiting,
 		"priority_waiting": {
 			"count": priority_count,
 			"conversations": priority_conversations,

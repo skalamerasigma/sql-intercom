@@ -267,18 +267,25 @@ def determine_alert_level_and_recommendation(
 				count = max(capacity_needed_1h, min_tse_needed, 1)  # Ensure at least 1
 			else:
 				count = max(capacity_needed_1h, 1)  # Ensure at least 1
-			reason = f"No TSE's available. {waiting_count} conversations waiting for first reply need immediate attention."
+			reason = f"No TSE's available. {waiting_count} conversation{'s' if waiting_count != 1 else ''} waiting for first reply need immediate attention."
 		else:
 			count = max(additional_tse_needed, 1)  # At least 1
 			reason = "Critical capacity threshold exceeded. Immediate action required."
+			# Add waiting count context if significant
+			if waiting_count > 5:
+				reason += f" {waiting_count} conversation{'s' if waiting_count != 1 else ''} waiting for first reply."
 	elif alert_level == "orange":
 		action = "add_tse" if additional_tse_needed > 0 else "monitor"
 		count = additional_tse_needed
 		reason = f"Capacity utilization at {utilization_percent:.1f}%. Consider adding TSE's soon."
+		if waiting_count > 7:
+			reason += f" {waiting_count} conversation{'s' if waiting_count != 1 else ''} waiting for first reply."
 	elif alert_level == "yellow":
 		action = "monitor" if additional_tse_needed == 0 else "add_tse"
 		count = additional_tse_needed
 		reason = "Capacity utilization approaching threshold. Monitor closely."
+		if waiting_count > 3:
+			reason += f" {waiting_count} conversation{'s' if waiting_count != 1 else ''} waiting for first reply."
 	else:
 		action = "none"
 		count = 0
@@ -286,9 +293,7 @@ def determine_alert_level_and_recommendation(
 	
 	# Adjust reason based on specific conditions
 	if snoozed_projection["returning_in_1h"] > available_capacity:
-		reason += f" {snoozed_projection['returning_in_1h']} snoozed chats returning in 1h will exceed capacity."
-	if waiting_count > 5:
-		reason += f" {waiting_count} conversations waiting for first reply in queue."
+		reason += f" {snoozed_projection['returning_in_1h']} snoozed chat{'s' if snoozed_projection['returning_in_1h'] != 1 else ''} returning in 1h will exceed capacity."
 	
 	return (
 		alert_level,
