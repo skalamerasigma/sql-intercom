@@ -643,9 +643,18 @@
 			// Update recommendation
 			const recText = document.getElementById("capacity-recommendation-text");
 			if (recText) {
-				if (rec.action === "add_tse" && rec.count > 0) {
-					recText.textContent = `Add ${rec.count} TSE${rec.count > 1 ? "'s" : ""} to queue`;
-					recText.style.color = alertLevel === "red" ? "var(--accent-4)" : "var(--accent-6)";
+				// Debug: log recommendation data
+				console.log("Capacity recommendation:", rec, "Alert level:", alertLevel);
+				
+				if (rec.action === "add_tse") {
+					if (rec.count > 0) {
+						recText.textContent = `Add ${rec.count} TSE${rec.count > 1 ? "'s" : ""} to queue`;
+						recText.style.color = alertLevel === "red" ? "var(--accent-4)" : "var(--accent-6)";
+					} else {
+						// Fallback: if count is 0 but action is add_tse, show at least 1
+						recText.textContent = "Add 1 TSE to queue";
+						recText.style.color = alertLevel === "red" ? "var(--accent-4)" : "var(--accent-6)";
+					}
 				} else if (rec.action === "monitor") {
 					recText.textContent = "Monitor closely";
 					recText.style.color = "var(--accent-6)";
