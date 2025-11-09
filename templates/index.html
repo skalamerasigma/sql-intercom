@@ -42,13 +42,28 @@
 				<div class="kpi-waiting-content">
 					<div class="kpi-waiting-left">
 						<div class="kpi-title">Waiting 1st Reply</div>
-						<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
-						<div class="priority-count-wrapper">
-							<span class="priority-count-label" id="priority-count-label">—</span>
-							<div class="tooltip" id="priority-tooltip">
-								<div class="tooltip-header">Priority Accounts</div>
-								<div class="tooltip-content" id="priority-tooltip-content">
-									<div class="tooltip-loading">Loading...</div>
+						<div class="kpi-waiting-main-row">
+							<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
+						</div>
+					</div>
+					<div class="kpi-waiting-center">
+						<div class="kpi-waiting-metrics">
+							<div class="priority-count-wrapper">
+								<span class="priority-count-label" id="priority-count-label">—</span>
+								<div class="tooltip" id="priority-tooltip">
+									<div class="tooltip-header">Priority Accounts</div>
+									<div class="tooltip-content" id="priority-tooltip-content">
+										<div class="tooltip-loading">Loading...</div>
+									</div>
+								</div>
+							</div>
+							<div class="priority-count-wrapper">
+								<span class="priority-count-label" id="unassigned-count-label">—</span>
+								<div class="tooltip" id="unassigned-tooltip">
+									<div class="tooltip-header">Unassigned Conversations</div>
+									<div class="tooltip-content" id="unassigned-tooltip-content">
+										<div class="tooltip-loading">Loading...</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -61,17 +76,29 @@
 					</div>
 				</div>
 			</div>
-			<div class="kpi-card kpi-open">
-				<div class="kpi-title">Open</div>
-				<div class="kpi-value" id="kpi-open">—</div>
-			</div>
-			<div class="kpi-card kpi-snoozed">
-				<div class="kpi-title">Snoozed</div>
-				<div class="kpi-value" id="kpi-snoozed">—</div>
-			</div>
-			<div class="kpi-card kpi-unassigned">
-				<div class="kpi-title">Unassigned</div>
-				<div class="kpi-value" id="kpi-unassigned">—</div>
+			<div class="kpi-card kpi-open-snoozed">
+				<div class="kpi-title">Open vs Snoozed</div>
+				<div class="open-snoozed-visualization">
+					<svg class="open-snoozed-chart" id="open-snoozed-chart" viewBox="0 0 200 200">
+						<circle class="chart-ring-bg" cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="20" />
+						<circle class="chart-ring-open" id="chart-ring-open" cx="100" cy="100" r="80" fill="none" stroke="var(--accent-2)" stroke-width="20" stroke-dasharray="0 502.65" transform="rotate(-90 100 100)" />
+						<circle class="chart-ring-snoozed" id="chart-ring-snoozed" cx="100" cy="100" r="80" fill="none" stroke="var(--accent-5)" stroke-width="20" stroke-dasharray="0 502.65" transform="rotate(-90 100 100)" />
+						<text class="chart-center-text" x="100" y="95" text-anchor="middle" dominant-baseline="middle" id="chart-center-total">—</text>
+						<text class="chart-center-label" x="100" y="115" text-anchor="middle" dominant-baseline="middle">Total</text>
+					</svg>
+					<div class="open-snoozed-legend">
+						<div class="legend-item">
+							<span class="legend-color" style="background: var(--accent-2);"></span>
+							<span class="legend-label">Open (non-snoozed)</span>
+							<span class="legend-value" id="legend-open-value">—</span>
+						</div>
+						<div class="legend-item">
+							<span class="legend-color" style="background: var(--accent-5);"></span>
+							<span class="legend-label">Snoozed</span>
+							<span class="legend-value" id="legend-snoozed-value">—</span>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -89,7 +116,7 @@
 					</div>
 				</div>
 				<div class="chart-container">
-					<svg class="mini-chart" id="wait-times-chart" viewBox="0 0 200 75" preserveAspectRatio="none">
+					<svg class="mini-chart" id="wait-times-chart" viewBox="0 0 200 85" preserveAspectRatio="none">
 						<defs>
 							<linearGradient id="waitGradient" x1="0%" y1="0%" x2="0%" y2="100%">
 								<stop offset="0%" style="stop-color:var(--accent-2);stop-opacity:0.3" />
@@ -120,7 +147,7 @@
 					</div>
 				</div>
 				<div class="chart-container">
-					<svg class="mini-chart" id="sla-chart" viewBox="0 0 200 75" preserveAspectRatio="none">
+					<svg class="mini-chart" id="sla-chart" viewBox="0 0 200 85" preserveAspectRatio="none">
 						<defs>
 							<linearGradient id="slaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
 								<stop offset="0%" style="stop-color:var(--accent-7);stop-opacity:0.3" />
@@ -267,11 +294,13 @@
 			svg.style.display = 'block';
 			
 			const width = 200;
-			const height = 75;
+			const height = 85;
 			const padding = 2;
-			const axisHeight = 12;
+			const bottomPadding = 14; // Extra padding at bottom for labels
+			const axisHeight = 16;
+			const axisMargin = 6;
 			const chartWidth = width - padding * 2;
-			const chartHeight = height - padding * 2 - axisHeight;
+			const chartHeight = height - padding - bottomPadding - axisHeight - axisMargin;
 			
 			// Calculate max value if not provided
 			if (!maxValue) {
@@ -294,18 +323,18 @@
 			// Handle single point case
 			if (pointCount === 1) {
 				const x = padding + chartWidth / 2;
-				const y = height - padding - axisHeight - (dataPoints[0].value / maxValue) * chartHeight;
+				const y = height - bottomPadding - axisHeight - axisMargin - (dataPoints[0].value / maxValue) * chartHeight;
 				linePath = `M ${x} ${y} L ${x} ${y}`;
-				const bottomY = height - padding - axisHeight;
+				const bottomY = height - bottomPadding - axisHeight - axisMargin;
 				areaPath = `M ${padding} ${bottomY} L ${x} ${y} L ${padding + chartWidth} ${bottomY} Z`;
 				points.push({ x, y, value: dataPoints[0].value });
 			} else {
 				dataPoints.forEach((point, index) => {
 					const x = padding + (index / (pointCount - 1)) * chartWidth;
-					const y = height - padding - axisHeight - (point.value / maxValue) * chartHeight;
+					const y = height - bottomPadding - axisHeight - axisMargin - (point.value / maxValue) * chartHeight;
 					points.push({ x, y, value: point.value });
 					
-					const bottomY = height - padding - axisHeight;
+					const bottomY = height - bottomPadding - axisHeight - axisMargin;
 					if (index === 0) {
 						linePath = `M ${x} ${y}`;
 						areaPath = `M ${x} ${bottomY} L ${x} ${y}`;
@@ -317,7 +346,7 @@
 				
 				// Close area path
 				const lastX = padding + chartWidth;
-				const bottomY = height - padding - axisHeight;
+				const bottomY = height - bottomPadding - axisHeight - axisMargin;
 				areaPath += ` L ${lastX} ${bottomY} Z`;
 			}
 			
@@ -382,9 +411,11 @@
 								
 								// Position the tooltip group
 								tooltip.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+								tooltip.setAttribute('style', 'display: block; z-index: 1000;');
 							}
 							
 							tooltip.style.display = 'block';
+							tooltip.style.zIndex = '1000';
 						}
 					});
 					
@@ -417,7 +448,7 @@
 					const xPos = padding + (idx / (pointCount - 1)) * chartWidth;
 					// Ensure labels don't go outside bounds
 					const x = Math.max(padding + 8, Math.min(width - padding - 8, xPos));
-					const y = height - padding - 4; // Position lower, closer to bottom
+					const y = height - 4; // Position at bottom with padding for label visibility
 					
 					// Format time label
 					let label = '';
@@ -498,6 +529,56 @@
 		}
 
 
+		function updateOpenSnoozedChart(open, snoozed) {
+			// Snoozed is already included in Open, so total is just Open
+			const total = open;
+			const openNonSnoozed = Math.max(0, open - snoozed);
+			const circumference = 2 * Math.PI * 80; // radius = 80
+			
+			// Update center text
+			const centerText = document.getElementById("chart-center-total");
+			if (centerText) {
+				centerText.textContent = total || "—";
+			}
+			
+			// Update legend values
+			setText("legend-open-value", openNonSnoozed || "—");
+			setText("legend-snoozed-value", snoozed || "—");
+			
+			if (total === 0) {
+				// Hide rings if no data
+				const openRing = document.getElementById("chart-ring-open");
+				const snoozedRing = document.getElementById("chart-ring-snoozed");
+				if (openRing) openRing.style.strokeDasharray = "0 " + circumference;
+				if (snoozedRing) snoozedRing.style.strokeDasharray = "0 " + circumference;
+				return;
+			}
+			
+			// Calculate percentages based on total (Open)
+			const openNonSnoozedPercent = (openNonSnoozed / total) * 100;
+			const snoozedPercent = (snoozed / total) * 100;
+			
+			// Calculate dash arrays
+			const openDashLength = (openNonSnoozedPercent / 100) * circumference;
+			const snoozedDashLength = (snoozedPercent / 100) * circumference;
+			const snoozedOffset = openDashLength;
+			
+			// Update open ring (non-snoozed)
+			const openRing = document.getElementById("chart-ring-open");
+			if (openRing) {
+				openRing.style.strokeDasharray = `${openDashLength} ${circumference}`;
+				openRing.style.transition = "stroke-dasharray 0.5s ease";
+			}
+			
+			// Update snoozed ring (starts where open non-snoozed ends)
+			const snoozedRing = document.getElementById("chart-ring-snoozed");
+			if (snoozedRing) {
+				snoozedRing.style.strokeDasharray = `${snoozedDashLength} ${circumference}`;
+				snoozedRing.style.strokeDashoffset = -snoozedOffset;
+				snoozedRing.style.transition = "stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease";
+			}
+		}
+
 		function updateRatingsGauge(ratings) {
 			const gaugeArc = document.getElementById("gauge-arc");
 			const gaugePercent = document.getElementById("gauge-percent");
@@ -534,9 +615,8 @@
 				const data = await fetchMetrics();
 				document.getElementById("error").style.display = "none";
 
-				setText("kpi-open", data.totals.open);
-				setText("kpi-snoozed", data.totals.snoozed);
-				setText("kpi-unassigned", data.totals.unassigned_open);
+				// Update Open/Snoozed visualization
+				updateOpenSnoozedChart(data.totals.open, data.totals.snoozed);
 				
 				// Update waiting tile with conditional coloring
 				const waitingValue = data.totals.waiting_first_reply;
@@ -616,6 +696,23 @@
 					priorityLabel.textContent = "0 priority accounts";
 					priorityLabel.classList.remove("has-priority");
 					priorityTooltipContent.innerHTML = '<div class="tooltip-empty">No priority conversations</div>';
+				}
+				
+				// Update unassigned count and tooltip
+				const unassignedCount = data.totals.unassigned_open || 0;
+				const unassignedLabel = document.getElementById("unassigned-count-label");
+				const unassignedTooltip = document.getElementById("unassigned-tooltip");
+				const unassignedTooltipContent = document.getElementById("unassigned-tooltip-content");
+				
+				if (unassignedCount > 0) {
+					unassignedLabel.textContent = `${unassignedCount} unassigned`;
+					unassignedLabel.classList.add("has-priority");
+					// For now, just show count - could be enhanced to show conversation details
+					unassignedTooltipContent.innerHTML = `<div class="tooltip-empty">${unassignedCount} unassigned conversation${unassignedCount !== 1 ? 's' : ''}</div>`;
+				} else {
+					unassignedLabel.textContent = "0 unassigned";
+					unassignedLabel.classList.remove("has-priority");
+					unassignedTooltipContent.innerHTML = '<div class="tooltip-empty">No unassigned conversations</div>';
 				}
 
 				setText("wait-avg", data.wait_times.average_minutes + "m");

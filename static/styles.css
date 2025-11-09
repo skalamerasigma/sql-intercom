@@ -171,7 +171,7 @@ body {
 
 .kpis {
 	display: grid;
-	grid-template-columns: 2fr 1fr 1fr 1fr;
+	grid-template-columns: 2fr 1fr;
 	gap: 16px;
 	margin-bottom: 24px;
 }
@@ -186,21 +186,50 @@ body {
 .kpi-waiting-featured {
 	min-height: 140px;
 	padding: 24px;
+	display: flex;
+	flex-direction: column;
 }
 .kpi-waiting-content {
 	display: flex;
-	gap: 24px;
+	gap: 0;
 	height: 100%;
+	flex: 1;
 }
 .kpi-waiting-left {
-	flex: 1;
+	flex: 0 0 auto;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+	padding-right: 32px;
+}
+.kpi-waiting-main-row {
+	display: flex;
+	align-items: flex-start;
+	width: 100%;
+}
+.kpi-waiting-value {
+	flex-shrink: 0;
+	line-height: 1;
+	margin-top: 12px;
+}
+.kpi-waiting-center {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding-left: 32px;
+	padding-right: 32px;
+	border-right: 1px solid rgba(255,255,255,0.1);
+	min-width: 200px;
+}
+.kpi-waiting-metrics {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 .priority-count-wrapper {
 	position: relative;
-	margin-top: 12px;
+	margin-top: 0;
 }
 .priority-count-label {
 	font-size: 13px;
@@ -318,8 +347,7 @@ body {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	border-left: 1px solid rgba(255,255,255,0.1);
-	padding-left: 24px;
+	padding-left: 32px;
 }
 .top-waiting-title {
 	font-size: 11px;
@@ -370,12 +398,71 @@ body {
 	font-weight: 900;
 }
 .kpi-waiting-value {
-	font-size: 64px;
+	font-size: 80px;
 	font-weight: 900;
 }
-.kpi-open { border-top: 5px solid var(--accent-2); }
-.kpi-snoozed { border-top: 5px solid var(--accent-5); }
-.kpi-unassigned { border-top: 5px solid var(--accent-6); }
+.kpi-open-snoozed {
+	background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(156, 39, 176, 0.1));
+	border-top: 5px solid rgba(255, 255, 255, 0.2);
+}
+.open-snoozed-visualization {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 8px 0;
+}
+.open-snoozed-chart {
+	width: 140px;
+	height: 140px;
+}
+.chart-ring-bg {
+	transition: stroke 0.3s ease;
+}
+.chart-ring-open,
+.chart-ring-snoozed {
+	transition: stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease;
+	stroke-linecap: round;
+}
+.chart-center-text {
+	fill: var(--text);
+	font-size: 32px;
+	font-weight: 800;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.chart-center-label {
+	fill: rgba(255, 255, 255, 0.6);
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+}
+.open-snoozed-legend {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+}
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+}
+.legend-color {
+	width: 12px;
+	height: 12px;
+	border-radius: 2px;
+	flex-shrink: 0;
+}
+.legend-label {
+	flex: 1;
+	opacity: 0.8;
+}
+.legend-value {
+	font-weight: 700;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
 .kpi-waiting { border-top: 5px solid var(--accent-4); }
 .kpi-waiting-green {
 	border-top-color: var(--accent-7) !important;
@@ -423,21 +510,28 @@ body {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 12px;
 	margin-bottom: 12px;
+	position: relative;
+	z-index: 0;
 }
 .metric {
 	background: #141516;
 	border-radius: 10px;
 	padding: 12px;
 	border: 1px solid rgba(255,255,255,0.06);
+	position: relative;
+	z-index: 0;
 }
 .metric-label { font-size: 12px; opacity: .7; margin-bottom: 6px; }
 .metric-value { font-size: 24px; font-weight: 800; }
 .chart-container {
-	margin-top: 12px;
-	height: 75px;
+	margin-top: 80px;
+	height: 85px;
 	width: 100%;
 	opacity: 0.7;
 	transition: opacity 0.2s ease;
+	overflow: visible;
+	position: relative;
+	z-index: 10;
 }
 .chart-container:hover {
 	opacity: 1;
@@ -460,6 +554,7 @@ body {
 }
 .chart-tooltip {
 	pointer-events: none;
+	z-index: 1000;
 }
 .tooltip-bg {
 	fill: var(--card);
@@ -583,7 +678,7 @@ body {
 		padding-top: 16px;
 	}
 	.kpi-waiting-value {
-		font-size: 48px;
+		font-size: 60px;
 	}
 	.tooltip {
 		min-width: 280px;
