@@ -82,7 +82,7 @@
 		</section>
 
 		<section class="agents panel">
-			<div class="panel-title">Agents</div>
+			<div class="panel-title">TSE's</div>
 			<table class="agents-table" id="agents-table">
 				<thead>
 					<tr>
@@ -91,7 +91,6 @@
 						<th>Snoozed</th>
 						<th>Waiting 1st Reply</th>
 						<th>Away</th>
-						<th>Inbox Seat</th>
 						<th>Email</th>
 					</tr>
 				</thead>
@@ -132,7 +131,6 @@
 						<td class="mono">${a.assigned_snoozed}</td>
 						<td class="mono">${a.assigned_waiting}</td>
 						<td>${a.away ? "Yes" : "No"}</td>
-						<td>${a.has_inbox_seat ? "Yes" : "No"}</td>
 						<td class="muted">${a.email || ""}</td>
 					`;
 					tbody.appendChild(tr);
