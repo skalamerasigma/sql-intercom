@@ -71,6 +71,35 @@ def compute_metrics(
 	team_id: int,
 	now_s: Optional[int] = None,
 ) -> Dict[str, Any]:
+	return _compute_metrics_internal(conversations, admins, team_id, now_s)
+
+
+def compute_metrics_with_overrides(
+	conversations: List[Dict[str, Any]],
+	admins: List[Dict[str, Any]],
+	team_id: int,
+	snoozed_total_override: Optional[int] = None,
+	open_total_override: Optional[int] = None,
+	now_s: Optional[int] = None,
+) -> Dict[str, Any]:
+	return _compute_metrics_internal(
+		conversations,
+		admins,
+		team_id,
+		now_s,
+		snoozed_total_override,
+		open_total_override,
+	)
+
+
+def _compute_metrics_internal(
+	conversations: List[Dict[str, Any]],
+	admins: List[Dict[str, Any]],
+	team_id: int,
+	now_s: Optional[int] = None,
+	snoozed_total_override: Optional[int] = None,
+	open_total_override: Optional[int] = None,
+) -> Dict[str, Any]:
 	now = now_s or int(time.time())
 	open_convs = [c for c in conversations if _is_open(c) and c.get("team_assignee_id") == team_id]
 	snoozed_convs = [c for c in conversations if _is_snoozed(c) and c.get("team_assignee_id") == team_id]
@@ -146,8 +175,8 @@ def compute_metrics(
 		"generated_at": now,
 		"team_id": team_id,
 		"totals": {
-			"open": len(open_convs),
-			"snoozed": len(snoozed_convs),
+			"open": int(open_total_override) if open_total_override is not None else len(open_convs),
+			"snoozed": int(snoozed_total_override) if snoozed_total_override is not None else len(snoozed_convs),
 			"unassigned_open": len(unassigned_open),
 			"waiting_first_reply": len(waiting_first_reply),
 		},
@@ -166,6 +195,7 @@ def compute_metrics(
 			"negative": num_negative,
 		},
 		"agents": agents,
+		"agent_assignment": agent_assignment_counts,
 	}
 
 

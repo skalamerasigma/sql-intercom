@@ -135,9 +135,23 @@
 				});
 		}
 
+		async function fetchAgents() {
+			const res = await fetch(`/api/agents`, { cache: "no-store" });
+			const payload = await res.json();
+			return payload.admins || [];
+		}
+
+		function filterTeamAgents(admins) {
+			return (admins || []).filter(a => {
+				const ids = new Set((a.team_ids || []));
+				const pri = new Set(((a.team_priority_level || {}).primary_team_ids || []));
+				return ids.has ? (ids.has(teamId) || pri.has(teamId)) : (ids.has === undefined ? (Array.isArray(a.team_ids) && a.team_ids.includes(teamId)) || (Array.isArray((a.team_priority_level || {}).primary_team_ids) && (a.team_priority_level.primary_team_ids || []).includes(teamId)) : false);
+			});
+		}
+
 		async function hydrate() {
 			try {
-				const data = await fetchMetrics();
+				const [data, admins] = await Promise.all([fetchMetrics(), fetchAgents()]);
 				document.getElementById("error").style.display = "none";
 
 				setText("kpi-open", data.totals.open);
@@ -156,7 +170,16 @@
 				setText("rated-pos", data.ratings.positive);
 				setText("rated-neg", data.ratings.negative);
 
-				renderAgents(data.agents);
+				// Merge assignment counts from metrics with roster filtered to the team
+				const roster = filterTeamAgents(admins).map(a => ({
+					id: String(a.id),
+					name: a.name,
+					email: a.email,
+					away: !!a.away_mode_enabled,
+					has_inbox_seat: !!a.has_inbox_seat,
+					assigned_count: (data.agent_assignment && data.agent_assignment[String(a.id)]) || 0
+				}));
+				renderAgents(roster);
 			} catch (err) {
 				console.error(err);
 				const el = document.getElementById("error");

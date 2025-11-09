@@ -15,7 +15,7 @@ from intercom_dashboard.config import (
 	TEAM_ID,
 )
 from intercom_dashboard.intercom_client import IntercomClient
-from intercom_dashboard.metrics import compute_metrics
+from intercom_dashboard.metrics import compute_metrics_with_overrides
 
 
 @asynccontextmanager
@@ -59,10 +59,18 @@ async def agents() -> Dict[str, Any]:
 async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 	client: IntercomClient = app.state.ic_client
 	try:
-		admins_task = asyncio.create_task(client.list_all_admins())
-		all_conversations_task = asyncio.create_task(client.get_all_team_conversations(team_id))
-		admins, conversations = await asyncio.gather(admins_task, all_conversations_task)
-		data = compute_metrics(conversations=conversations, admins=admins, team_id=team_id)
+		# Fetch open conversations as a SAMPLE plus total count; get snoozed count fast.
+		open_sample_task = asyncio.create_task(client.get_open_conversations_sampled_and_total(team_id, max_pages=1))
+		snoozed_count_task = asyncio.create_task(client.get_snoozed_count_for_team(team_id))
+		(open_sample, open_total), snoozed_total = await asyncio.gather(open_sample_task, snoozed_count_task)
+
+		data = compute_metrics_with_overrides(
+			conversations=open_sample,
+			admins=[],
+			team_id=team_id,
+			snoozed_total_override=snoozed_total,
+			open_total_override=open_total,
+		)
 		return data
 	except Exception as exc:
 		return ORJSONResponse(

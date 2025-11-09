@@ -19,6 +19,9 @@ class IntercomClient:
 			raise RuntimeError(
 				"Missing INTERCOM_BEARER_TOKEN. Set it in environment or .env."
 			)
+		timeout = httpx.Timeout(
+			REQUEST_TIMEOUT_SECONDS, connect=min(REQUEST_TIMEOUT_SECONDS, 10.0)
+		)
 		self._client = client or httpx.AsyncClient(
 			base_url=INTERCOM_API_BASE,
 			headers={
@@ -28,7 +31,7 @@ class IntercomClient:
 				# Many search endpoints require the Unstable version header
 				"Intercom-Version": "Unstable",
 			},
-			timeout=REQUEST_TIMEOUT_SECONDS,
+			timeout=timeout,
 		)
 
 	async def aclose(self) -> None:
@@ -81,6 +84,23 @@ class IntercomClient:
 	# ---------------------------
 	# Conversations search
 	# ---------------------------
+	async def search_conversations_one_page(
+		self,
+		query_clauses: List[Dict[str, Any]],
+		per_page: int = 1,
+	) -> Dict[str, Any]:
+		"""
+		POST /conversations/search returning only the first page.
+		Use this to read total_count quickly without paginating.
+		"""
+		body: Dict[str, Any] = {
+			"query": {"operator": "AND", "value": query_clauses},
+			"pagination": {"per_page": per_page},
+		}
+		resp = await self._client.post("/conversations/search", json=body)
+		resp.raise_for_status()
+		return resp.json()
+
 	async def search_conversations_paginated(
 		self,
 		query_clauses: List[Dict[str, Any]],
@@ -119,6 +139,41 @@ class IntercomClient:
 			break
 
 		return all_conversations, last_pages
+	
+	async def search_conversations_sampled(
+		self,
+		query_clauses: List[Dict[str, Any]],
+		per_page: int = PER_PAGE,
+		max_pages: int = 3,
+	) -> Tuple[List[Dict[str, Any]], int]:
+		"""
+		Collect up to max_pages pages and return (sampled_conversations, total_count_from_first_page).
+		"""
+		collected: List[Dict[str, Any]] = []
+		starting_after: Optional[str] = None
+		total_count: int = 0
+		page_no = 0
+		per_page_local = min(per_page, 75)
+		while page_no < max_pages:
+			body: Dict[str, Any] = {
+				"query": {"operator": "AND", "value": query_clauses},
+				"pagination": {"per_page": per_page_local},
+			}
+			if starting_after:
+				body["pagination"]["starting_after"] = starting_after
+			resp = await self._client.post("/conversations/search", json=body)
+			resp.raise_for_status()
+			data = resp.json()
+			if not total_count:
+				total_count = int(data.get("total_count") or 0)
+			collected.extend(data.get("conversations", []))
+			pages = data.get("pages") or {}
+			next_obj = pages.get("next") if isinstance(pages, dict) else None
+			if not (next_obj and next_obj.get("starting_after")):
+				break
+			starting_after = next_obj["starting_after"]
+			page_no += 1
+		return collected, total_count
 
 	# Helper searches
 	async def get_open_conversations_for_team(self, team_id: int) -> List[Dict[str, Any]]:
@@ -139,11 +194,33 @@ class IntercomClient:
 			]
 		)
 		return convs
+	
+	async def get_snoozed_count_for_team(self, team_id: int) -> int:
+		data = await self.search_conversations_one_page(
+			[
+				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
+				{"field": "state", "operator": "=", "value": "snoozed"},
+			],
+			per_page=1,
+		)
+		return int(data.get("total_count") or 0)
 
 	async def get_all_team_conversations(self, team_id: int) -> List[Dict[str, Any]]:
 		open_task = asyncio.create_task(self.get_open_conversations_for_team(team_id))
 		snoozed_task = asyncio.create_task(self.get_snoozed_conversations_for_team(team_id))
 		open_list, snoozed_list = await asyncio.gather(open_task, snoozed_task)
 		return [*open_list, *snoozed_list]
+
+	async def get_open_conversations_sampled_and_total(
+		self, team_id: int, max_pages: int = 3
+	) -> Tuple[List[Dict[str, Any]], int]:
+		return await self.search_conversations_sampled(
+			[
+				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
+				{"field": "open", "operator": "=", "value": True},
+			],
+			per_page=50,
+			max_pages=max_pages,
+		)
 
 
