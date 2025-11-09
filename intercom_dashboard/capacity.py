@@ -257,8 +257,12 @@ def determine_alert_level_and_recommendation(
 		# If no TSE's available, ensure we recommend at least enough to handle the work
 		if available_tse_count == 0:
 			# Calculate minimum TSE's needed based on unassigned conversations
-			min_tse_needed = math.ceil(unassigned_count / MAX_CHATS_PER_TSE) if (MAX_CHATS_PER_TSE > 0 and unassigned_count > 0) else 1
-			count = max(additional_tse_needed, min_tse_needed)
+			# Use the larger of: capacity_needed_1h (which includes unassigned) or direct calculation
+			if unassigned_count > 0:
+				min_tse_needed = math.ceil(unassigned_count / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 1
+				count = max(capacity_needed_1h, min_tse_needed, 1)  # Ensure at least 1
+			else:
+				count = max(capacity_needed_1h, 1)  # Ensure at least 1
 			reason = f"No TSE's available. {unassigned_count} unassigned conversations need immediate attention."
 		else:
 			count = max(additional_tse_needed, 1)  # At least 1
