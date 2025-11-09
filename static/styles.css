@@ -36,10 +36,39 @@ body {
 	width: auto;
 	height: auto;
 }
+.header-right {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
 .header-logo-right {
 	max-height: 65px;
 	width: auto;
 	height: auto;
+}
+.refresh-button {
+	background: rgba(12, 13, 14, 0.3);
+	border: 1px solid rgba(12, 13, 14, 0.4);
+	border-radius: 8px;
+	padding: 8px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #0c0d0e;
+	transition: all 0.2s ease;
+}
+.refresh-button:hover {
+	background: rgba(12, 13, 14, 0.5);
+	border-color: rgba(12, 13, 14, 0.6);
+	transform: rotate(90deg);
+}
+.refresh-button:active {
+	transform: rotate(180deg);
+	background: rgba(12, 13, 14, 0.6);
+}
+.refresh-button svg {
+	display: block;
 }
 .header h1 {
 	margin: 0 0 6px 0;
@@ -57,9 +86,31 @@ body {
 	padding: 0 16px 32px 16px;
 }
 
+.nav-buttons {
+	margin-bottom: 20px;
+	display: flex;
+	gap: 12px;
+}
+.nav-button {
+	background: var(--card);
+	border: 1px solid rgba(255,255,255,0.1);
+	border-radius: 8px;
+	padding: 10px 20px;
+	color: var(--text);
+	text-decoration: none;
+	font-weight: 600;
+	transition: all 0.2s ease;
+	display: inline-block;
+}
+.nav-button:hover {
+	background: rgba(255,255,255,0.05);
+	border-color: rgba(255,255,255,0.2);
+	transform: translateY(-1px);
+}
+
 .kpis {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: 2fr 1fr 1fr 1fr;
 	gap: 16px;
 	margin-bottom: 24px;
 }
@@ -70,6 +121,10 @@ body {
 	box-shadow: 0 6px 20px rgba(0,0,0,0.35);
 	border: 1px solid rgba(255,255,255,0.06);
 	min-height: 100px;
+}
+.kpi-waiting-featured {
+	min-height: 140px;
+	padding: 24px;
 }
 .kpi-title {
 	font-size: 12px;
@@ -82,10 +137,32 @@ body {
 	font-size: 36px;
 	font-weight: 900;
 }
+.kpi-waiting-value {
+	font-size: 64px;
+	font-weight: 900;
+}
 .kpi-open { border-top: 5px solid var(--accent-2); }
 .kpi-snoozed { border-top: 5px solid var(--accent-5); }
 .kpi-unassigned { border-top: 5px solid var(--accent-6); }
 .kpi-waiting { border-top: 5px solid var(--accent-4); }
+.kpi-waiting-green {
+	border-top-color: var(--accent-7) !important;
+}
+.kpi-waiting-green .kpi-waiting-value {
+	color: var(--accent-7);
+}
+.kpi-waiting-yellow {
+	border-top-color: var(--accent-6) !important;
+}
+.kpi-waiting-yellow .kpi-waiting-value {
+	color: var(--accent-6);
+}
+.kpi-waiting-red {
+	border-top-color: var(--accent-4) !important;
+}
+.kpi-waiting-red .kpi-waiting-value {
+	color: var(--accent-4);
+}
 
 .stats-grid {
 	display: grid;
@@ -144,9 +221,81 @@ body {
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .muted { color: var(--muted); }
 
+.ratings-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+.gauge-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 12px;
+}
+.gauge {
+	width: 100%;
+	max-width: 280px;
+	height: auto;
+}
+#gauge-arc {
+	transition: stroke-dashoffset 0.6s ease-out, stroke 0.3s ease-out;
+}
+.gauge-value {
+	font-size: 32px;
+	font-weight: 900;
+	fill: var(--text);
+}
+.gauge-label {
+	font-size: 12px;
+	fill: var(--muted);
+	opacity: 0.8;
+}
+.ratings-stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+}
+.rating-stat {
+	background: #141516;
+	border-radius: 10px;
+	padding: 12px;
+	border: 1px solid rgba(255,255,255,0.06);
+	text-align: center;
+}
+.rating-stat-label {
+	font-size: 12px;
+	opacity: .7;
+	margin-bottom: 6px;
+}
+.rating-stat-value {
+	font-size: 24px;
+	font-weight: 800;
+}
+.rating-stat-value.positive {
+	color: var(--accent-7);
+}
+.rating-stat-value.negative {
+	color: var(--accent-4);
+}
+
 @media (max-width: 900px) {
-	.kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.kpis { 
+		grid-template-columns: 1fr;
+	}
+	.kpi-waiting-featured {
+		min-height: 120px;
+		padding: 20px;
+	}
+	.kpi-waiting-value {
+		font-size: 48px;
+	}
 	.stats-grid { grid-template-columns: 1fr; }
+	.ratings-container {
+		flex-direction: column;
+	}
+	.ratings-stats {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
 }
 
 

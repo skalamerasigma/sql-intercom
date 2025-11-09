@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>TSE Table - Support Queue Live-Look-In</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<header class="header">
+		<img src="/static/sql-logo.svg" alt="SQL Logo" class="header-logo-left" />
+		<div class="header-right">
+			<button id="refresh-btn" class="refresh-button" title="Refresh metrics">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="23 4 23 10 17 10"></polyline>
+					<polyline points="1 20 1 14 7 14"></polyline>
+					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+				</svg>
+			</button>
+			<img src="/static/support-queue-live.svg" alt="Support Queue Live" class="header-logo-right" />
+		</div>
+	</header>
+
+	<div id="error" style="display:none; margin:12px auto; max-width:1200px; padding:10px 14px; border-radius:10px; background:#3b0a0a; color:#ffd4d4; border:1px solid #8a1f1f;">
+	</div>
+
+	<main class="container">
+		<div class="nav-buttons">
+			<a href="/" class="nav-button">Back to Dashboard</a>
+		</div>
+
+		<section class="agents panel">
+			<div class="panel-title">TSE's</div>
+			<table class="agents-table" id="agents-table">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Open</th>
+						<th>Snoozed</th>
+						<th>Waiting 1st Reply</th>
+						<th>Away</th>
+						<th>Email</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</section>
+	</main>
+
+	<script>
+		const teamId = {{ team_id }};
+		const refreshIntervalSeconds = {{ refresh_interval }};
+
+		async function fetchMetrics() {
+			const res = await fetch(`/api/metrics?team_id=${teamId}`, { cache: "no-store" });
+			let payload = null;
+			try { payload = await res.json(); } catch (_) { /* ignore non-JSON */ }
+			if (!res.ok) {
+				const msg = (payload && (payload.detail || payload.error)) || `${res.status} ${res.statusText}`;
+				throw new Error(msg);
+			}
+			return payload || {};
+		}
+
+		function setText(id, value) {
+			document.getElementById(id).textContent = value;
+		}
+
+		function renderAgents(agents) {
+			const tbody = document.querySelector("#agents-table tbody");
+			tbody.innerHTML = "";
+			agents
+				.sort((a, b) => (b.assigned_open + b.assigned_snoozed + b.assigned_waiting) - (a.assigned_open + a.assigned_snoozed + a.assigned_waiting))
+				.forEach(a => {
+					const tr = document.createElement("tr");
+					tr.innerHTML = `
+						<td>${a.name || "-"}</td>
+						<td class="mono">${a.assigned_open}</td>
+						<td class="mono">${a.assigned_snoozed}</td>
+						<td class="mono">${a.assigned_waiting}</td>
+						<td>${a.away ? "Yes" : "No"}</td>
+						<td class="muted">${a.email || ""}</td>
+					`;
+					tbody.appendChild(tr);
+				});
+		}
+
+		async function fetchAgents() {
+			const res = await fetch(`/api/agents`, { cache: "no-store" });
+			const payload = await res.json();
+			return payload.admins || [];
+		}
+
+		function filterTeamAgents(admins) {
+			return (admins || []).filter(a => {
+				const ids = new Set((a.team_ids || []));
+				const pri = new Set(((a.team_priority_level || {}).primary_team_ids || []));
+				return ids.has ? (ids.has(teamId) || pri.has(teamId)) : (ids.has === undefined ? (Array.isArray(a.team_ids) && a.team_ids.includes(teamId)) || (Array.isArray((a.team_priority_level || {}).primary_team_ids) && (a.team_priority_level.primary_team_ids || []).includes(teamId)) : false);
+			});
+		}
+
+		async function hydrate() {
+			try {
+				const [data, admins] = await Promise.all([fetchMetrics(), fetchAgents()]);
+				document.getElementById("error").style.display = "none";
+
+				// Merge assignment counts (open & snoozed) from metrics with roster filtered to the team
+				const roster = filterTeamAgents(admins).map(a => ({
+					id: String(a.id),
+					name: a.name,
+					email: a.email,
+					away: !!a.away_mode_enabled,
+					has_inbox_seat: !!a.has_inbox_seat,
+					assigned_open: (data.agent_assignment_open && data.agent_assignment_open[String(a.id)]) || 0,
+					assigned_snoozed: (data.agent_assignment_snoozed && data.agent_assignment_snoozed[String(a.id)]) || 0,
+					assigned_waiting: (data.agent_assignment_waiting && data.agent_assignment_waiting[String(a.id)]) || 0,
+				}));
+				renderAgents(roster);
+			} catch (err) {
+				console.error(err);
+				const el = document.getElementById("error");
+				el.textContent = "Error loading metrics. " + (err && err.message ? err.message : "");
+				el.style.display = "block";
+			}
+		}
+
+		// Set up refresh button
+		document.getElementById("refresh-btn").addEventListener("click", () => {
+			hydrate();
+		});
+
+		hydrate();
+		setInterval(hydrate, refreshIntervalSeconds * 1000);
+	</script>
+</body>
+</html>
+

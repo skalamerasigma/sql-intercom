@@ -48,6 +48,18 @@ async def index(request: Request) -> HTMLResponse:
 	)
 
 
+@app.get("/tse", response_class=HTMLResponse)
+async def tse_table(request: Request) -> HTMLResponse:
+	return templates.TemplateResponse(
+		"tse.html",
+		{
+			"request": request,
+			"team_id": TEAM_ID,
+			"refresh_interval": REFRESH_INTERVAL_SECONDS,
+		},
+	)
+
+
 @app.get("/api/agents")
 async def agents() -> Dict[str, Any]:
 	client: IntercomClient = app.state.ic_client

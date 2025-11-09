@@ -9,14 +9,31 @@
 <body>
 	<header class="header">
 		<img src="/static/sql-logo.svg" alt="SQL Logo" class="header-logo-left" />
-		<img src="/static/support-queue-live.svg" alt="Support Queue Live" class="header-logo-right" />
+		<div class="header-right">
+			<button id="refresh-btn" class="refresh-button" title="Refresh metrics">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="23 4 23 10 17 10"></polyline>
+					<polyline points="1 20 1 14 7 14"></polyline>
+					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+				</svg>
+			</button>
+			<img src="/static/support-queue-live.svg" alt="Support Queue Live" class="header-logo-right" />
+		</div>
 	</header>
 
 	<div id="error" style="display:none; margin:12px auto; max-width:1200px; padding:10px 14px; border-radius:10px; background:#3b0a0a; color:#ffd4d4; border:1px solid #8a1f1f;">
 	</div>
 
 	<main class="container">
+		<div class="nav-buttons">
+			<a href="/tse" class="nav-button">View TSE Table</a>
+		</div>
+		
 		<section class="kpis">
+			<div class="kpi-card kpi-waiting kpi-waiting-featured" id="kpi-waiting-card">
+				<div class="kpi-title">Waiting 1st Reply</div>
+				<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
+			</div>
 			<div class="kpi-card kpi-open">
 				<div class="kpi-title">Open</div>
 				<div class="kpi-value" id="kpi-open">—</div>
@@ -28,10 +45,6 @@
 			<div class="kpi-card kpi-unassigned">
 				<div class="kpi-title">Unassigned</div>
 				<div class="kpi-value" id="kpi-unassigned">—</div>
-			</div>
-			<div class="kpi-card kpi-waiting">
-				<div class="kpi-title">Waiting 1st Reply</div>
-				<div class="kpi-value" id="kpi-waiting">—</div>
 			</div>
 		</section>
 
@@ -64,38 +77,45 @@
 			</div>
 			<div class="panel">
 				<div class="panel-title">Ratings</div>
-				<div class="metric-row">
-					<div class="metric">
-						<div class="metric-label">Rated</div>
-						<div class="metric-value" id="rated">—</div>
+				<div class="ratings-container">
+					<div class="gauge-wrapper">
+						<svg class="gauge" viewBox="0 0 200 120" id="ratings-gauge">
+							<!-- Background arc -->
+							<path d="M 20 100 A 80 80 0 0 1 180 100" 
+								fill="none" 
+								stroke="rgba(255,255,255,0.1)" 
+								stroke-width="12" 
+								stroke-linecap="round"/>
+							<!-- Value arc (will be updated dynamically) -->
+							<path id="gauge-arc" 
+								d="M 20 100 A 80 80 0 0 1 180 100" 
+								fill="none" 
+								stroke="#4cec8c" 
+								stroke-width="12" 
+								stroke-linecap="round"
+								stroke-dasharray="251.327"
+								stroke-dashoffset="251.327"/>
+							<!-- Center text -->
+							<text x="100" y="85" text-anchor="middle" class="gauge-value" id="gauge-percent">—</text>
+							<text x="100" y="105" text-anchor="middle" class="gauge-label">Satisfaction</text>
+						</svg>
 					</div>
-					<div class="metric">
-						<div class="metric-label">Positive</div>
-						<div class="metric-value" id="rated-pos">—</div>
-					</div>
-					<div class="metric">
-						<div class="metric-label">Negative</div>
-						<div class="metric-value" id="rated-neg">—</div>
+					<div class="ratings-stats">
+						<div class="rating-stat">
+							<div class="rating-stat-label">Rated</div>
+							<div class="rating-stat-value" id="rated">—</div>
+						</div>
+						<div class="rating-stat">
+							<div class="rating-stat-label">Positive</div>
+							<div class="rating-stat-value positive" id="rated-pos">—</div>
+						</div>
+						<div class="rating-stat">
+							<div class="rating-stat-label">Negative</div>
+							<div class="rating-stat-value negative" id="rated-neg">—</div>
+						</div>
 					</div>
 				</div>
 			</div>
-		</section>
-
-		<section class="agents panel">
-			<div class="panel-title">TSE's</div>
-			<table class="agents-table" id="agents-table">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Open</th>
-						<th>Snoozed</th>
-						<th>Waiting 1st Reply</th>
-						<th>Away</th>
-						<th>Email</th>
-					</tr>
-				</thead>
-				<tbody></tbody>
-			</table>
 		</section>
 	</main>
 
@@ -118,48 +138,64 @@
 			document.getElementById(id).textContent = value;
 		}
 
-		function renderAgents(agents) {
-			const tbody = document.querySelector("#agents-table tbody");
-			tbody.innerHTML = "";
-			agents
-				.sort((a, b) => (b.assigned_open + b.assigned_snoozed + b.assigned_waiting) - (a.assigned_open + a.assigned_snoozed + a.assigned_waiting))
-				.forEach(a => {
-					const tr = document.createElement("tr");
-					tr.innerHTML = `
-						<td>${a.name || "-"}</td>
-						<td class="mono">${a.assigned_open}</td>
-						<td class="mono">${a.assigned_snoozed}</td>
-						<td class="mono">${a.assigned_waiting}</td>
-						<td>${a.away ? "Yes" : "No"}</td>
-						<td class="muted">${a.email || ""}</td>
-					`;
-					tbody.appendChild(tr);
-				});
-		}
 
-		async function fetchAgents() {
-			const res = await fetch(`/api/agents`, { cache: "no-store" });
-			const payload = await res.json();
-			return payload.admins || [];
-		}
-
-		function filterTeamAgents(admins) {
-			return (admins || []).filter(a => {
-				const ids = new Set((a.team_ids || []));
-				const pri = new Set(((a.team_priority_level || {}).primary_team_ids || []));
-				return ids.has ? (ids.has(teamId) || pri.has(teamId)) : (ids.has === undefined ? (Array.isArray(a.team_ids) && a.team_ids.includes(teamId)) || (Array.isArray((a.team_priority_level || {}).primary_team_ids) && (a.team_priority_level.primary_team_ids || []).includes(teamId)) : false);
-			});
+		function updateRatingsGauge(ratings) {
+			const gaugeArc = document.getElementById("gauge-arc");
+			const gaugePercent = document.getElementById("gauge-percent");
+			const totalRated = ratings.num_rated || 0;
+			const positive = ratings.positive || 0;
+			
+			// Arc circumference for semicircle: π * radius (radius = 80)
+			const circumference = Math.PI * 80;
+			
+			if (totalRated === 0) {
+				gaugePercent.textContent = "—";
+				gaugeArc.style.strokeDashoffset = circumference.toString();
+				return;
+			}
+			
+			const percent = (positive / totalRated) * 100;
+			const offset = circumference - (percent / 100) * circumference;
+			
+			gaugeArc.style.strokeDashoffset = offset.toString();
+			gaugePercent.textContent = Math.round(percent) + "%";
+			
+			// Update gauge color based on satisfaction level
+			if (percent >= 80) {
+				gaugeArc.setAttribute("stroke", "#4cec8c"); // Green
+			} else if (percent >= 60) {
+				gaugeArc.setAttribute("stroke", "#efff45"); // Yellow
+			} else {
+				gaugeArc.setAttribute("stroke", "#fd8789"); // Red
+			}
 		}
 
 		async function hydrate() {
 			try {
-				const [data, admins] = await Promise.all([fetchMetrics(), fetchAgents()]);
+				const data = await fetchMetrics();
 				document.getElementById("error").style.display = "none";
 
 				setText("kpi-open", data.totals.open);
 				setText("kpi-snoozed", data.totals.snoozed);
 				setText("kpi-unassigned", data.totals.unassigned_open);
-				setText("kpi-waiting", data.totals.waiting_first_reply);
+				
+				// Update waiting tile with conditional coloring
+				const waitingValue = data.totals.waiting_first_reply;
+				setText("kpi-waiting", waitingValue);
+				const waitingCard = document.getElementById("kpi-waiting-card");
+				const waitingValueEl = document.getElementById("kpi-waiting");
+				waitingCard.classList.remove("kpi-waiting-green", "kpi-waiting-yellow", "kpi-waiting-red");
+				waitingValueEl.classList.remove("kpi-waiting-green", "kpi-waiting-yellow", "kpi-waiting-red");
+				if (waitingValue <= 2) {
+					waitingCard.classList.add("kpi-waiting-green");
+					waitingValueEl.classList.add("kpi-waiting-green");
+				} else if (waitingValue <= 4) {
+					waitingCard.classList.add("kpi-waiting-yellow");
+					waitingValueEl.classList.add("kpi-waiting-yellow");
+				} else {
+					waitingCard.classList.add("kpi-waiting-red");
+					waitingValueEl.classList.add("kpi-waiting-red");
+				}
 
 				setText("wait-avg", data.wait_times.average_minutes + "m");
 				setText("wait-p95", data.wait_times.p95_minutes + "m");
@@ -171,19 +207,10 @@
 				setText("rated", data.ratings.num_rated);
 				setText("rated-pos", data.ratings.positive);
 				setText("rated-neg", data.ratings.negative);
+				
+				// Update gauge visualization
+				updateRatingsGauge(data.ratings);
 
-				// Merge assignment counts (open & snoozed) from metrics with roster filtered to the team
-				const roster = filterTeamAgents(admins).map(a => ({
-					id: String(a.id),
-					name: a.name,
-					email: a.email,
-					away: !!a.away_mode_enabled,
-					has_inbox_seat: !!a.has_inbox_seat,
-					assigned_open: (data.agent_assignment_open && data.agent_assignment_open[String(a.id)]) || 0,
-					assigned_snoozed: (data.agent_assignment_snoozed && data.agent_assignment_snoozed[String(a.id)]) || 0,
-					assigned_waiting: (data.agent_assignment_waiting && data.agent_assignment_waiting[String(a.id)]) || 0,
-				}));
-				renderAgents(roster);
 			} catch (err) {
 				console.error(err);
 				const el = document.getElementById("error");
@@ -191,6 +218,11 @@
 				el.style.display = "block";
 			}
 		}
+
+		// Set up refresh button
+		document.getElementById("refresh-btn").addEventListener("click", () => {
+			hydrate();
+		});
 
 		hydrate();
 		setInterval(hydrate, refreshIntervalSeconds * 1000);
