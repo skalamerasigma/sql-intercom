@@ -84,6 +84,7 @@ def compute_metrics_with_overrides(
 	waiting_total_override: Optional[int] = None,
 	agent_assignment_open_override: Optional[Dict[str, int]] = None,
 	agent_assignment_snoozed_override: Optional[Dict[str, int]] = None,
+	agent_assignment_waiting_override: Optional[Dict[str, int]] = None,
 	now_s: Optional[int] = None,
 ) -> Dict[str, Any]:
 	return _compute_metrics_internal(
@@ -97,6 +98,7 @@ def compute_metrics_with_overrides(
 		waiting_total_override,
 		agent_assignment_open_override,
 		agent_assignment_snoozed_override,
+		agent_assignment_waiting_override,
 	)
 
 
@@ -111,6 +113,7 @@ def _compute_metrics_internal(
 	waiting_total_override: Optional[int] = None,
 	agent_assignment_open_override: Optional[Dict[str, int]] = None,
 	agent_assignment_snoozed_override: Optional[Dict[str, int]] = None,
+	agent_assignment_waiting_override: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Any]:
 	now = now_s or int(time.time())
 	open_convs = [c for c in conversations if _is_open(c) and c.get("team_assignee_id") == team_id]
@@ -170,6 +173,7 @@ def _compute_metrics_internal(
 	team_admins = [a for a in admins if _is_team_member(a)]
 	agent_assignment_open = agent_assignment_open_override or _group_by_admin(open_convs)
 	agent_assignment_snoozed = agent_assignment_snoozed_override or _group_by_admin(snoozed_convs)
+	agent_assignment_waiting = agent_assignment_waiting_override or _group_by_admin(waiting_first_reply)
 	agents = []
 	for a in team_admins:
 		aid = str(a.get("id"))
@@ -182,6 +186,7 @@ def _compute_metrics_internal(
 				"has_inbox_seat": bool(a.get("has_inbox_seat")),
 				"assigned_open": agent_assignment_open.get(aid, 0),
 				"assigned_snoozed": agent_assignment_snoozed.get(aid, 0),
+				"assigned_waiting": agent_assignment_waiting.get(aid, 0),
 			}
 		)
 
@@ -211,6 +216,7 @@ def _compute_metrics_internal(
 		"agents": agents,
 		"agent_assignment_open": agent_assignment_open,
 		"agent_assignment_snoozed": agent_assignment_snoozed,
+		"agent_assignment_waiting": agent_assignment_waiting,
 	}
 
 

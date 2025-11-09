@@ -77,10 +77,13 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		team_admins = [a for a in admins if _is_team_member(a)]
 		open_tasks = [asyncio.create_task(client.count_open_for_admin(team_id, a.get("id"))) for a in team_admins]
 		snoozed_tasks = [asyncio.create_task(client.count_snoozed_for_admin(team_id, a.get("id"))) for a in team_admins]
+		waiting_tasks = [asyncio.create_task(client.count_waiting_for_admin(team_id, a.get("id"))) for a in team_admins]
 		open_counts = await asyncio.gather(*open_tasks) if open_tasks else []
 		snoozed_counts = await asyncio.gather(*snoozed_tasks) if snoozed_tasks else []
+		waiting_counts = await asyncio.gather(*waiting_tasks) if waiting_tasks else []
 		agent_assignment_open = {str(team_admins[i].get("id")): int(open_counts[i] or 0) for i in range(len(team_admins))}
 		agent_assignment_snoozed = {str(team_admins[i].get("id")): int(snoozed_counts[i] or 0) for i in range(len(team_admins))}
+		agent_assignment_waiting = {str(team_admins[i].get("id")): int(waiting_counts[i] or 0) for i in range(len(team_admins))}
 		# Derive unassigned if API returned 0 (fallback)
 		if not unassigned_total:
 			unassigned_total = max(0, int(open_total) - sum(agent_assignment_open.values()))
@@ -95,6 +98,7 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 			waiting_total_override=waiting_total,
 			agent_assignment_open_override=agent_assignment_open,
 			agent_assignment_snoozed_override=agent_assignment_snoozed,
+			agent_assignment_waiting_override=agent_assignment_waiting,
 		)
 		return data
 	except Exception as exc:

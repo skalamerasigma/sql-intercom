@@ -89,6 +89,7 @@
 						<th>Name</th>
 						<th>Open</th>
 						<th>Snoozed</th>
+						<th>Waiting 1st Reply</th>
 						<th>Away</th>
 						<th>Inbox Seat</th>
 						<th>Email</th>
@@ -122,13 +123,14 @@
 			const tbody = document.querySelector("#agents-table tbody");
 			tbody.innerHTML = "";
 			agents
-				.sort((a, b) => (b.assigned_open + b.assigned_snoozed) - (a.assigned_open + a.assigned_snoozed))
+				.sort((a, b) => (b.assigned_open + b.assigned_snoozed + b.assigned_waiting) - (a.assigned_open + a.assigned_snoozed + a.assigned_waiting))
 				.forEach(a => {
 					const tr = document.createElement("tr");
 					tr.innerHTML = `
 						<td>${a.name || "-"}</td>
 						<td class="mono">${a.assigned_open}</td>
 						<td class="mono">${a.assigned_snoozed}</td>
+						<td class="mono">${a.assigned_waiting}</td>
 						<td>${a.away ? "Yes" : "No"}</td>
 						<td>${a.has_inbox_seat ? "Yes" : "No"}</td>
 						<td class="muted">${a.email || ""}</td>
@@ -181,6 +183,7 @@
 					has_inbox_seat: !!a.has_inbox_seat,
 					assigned_open: (data.agent_assignment_open && data.agent_assignment_open[String(a.id)]) || 0,
 					assigned_snoozed: (data.agent_assignment_snoozed && data.agent_assignment_snoozed[String(a.id)]) || 0,
+					assigned_waiting: (data.agent_assignment_waiting && data.agent_assignment_waiting[String(a.id)]) || 0,
 				}));
 				renderAgents(roster);
 			} catch (err) {

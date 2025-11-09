@@ -250,6 +250,19 @@ class IntercomClient:
 		)
 		return int(data.get("total_count") or 0)
 
+	async def count_waiting_for_admin(self, team_id: int, admin_id: str | int) -> int:
+		# Open, assigned to admin, and first_admin_reply_at is null
+		data = await self.search_conversations_one_page(
+			[
+				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
+				{"field": "admin_assignee_id", "operator": "=", "value": str(admin_id)},
+				{"field": "open", "operator": "=", "value": True},
+				{"field": "statistics.first_admin_reply_at", "operator": "=", "value": None},
+			],
+			per_page=1,
+		)
+		return int(data.get("total_count") or 0)
+
 	async def get_all_team_conversations(self, team_id: int) -> List[Dict[str, Any]]:
 		open_task = asyncio.create_task(self.get_open_conversations_for_team(team_id))
 		snoozed_task = asyncio.create_task(self.get_snoozed_conversations_for_team(team_id))
