@@ -226,6 +226,8 @@ def get_demo_agent_assignments() -> Dict[str, Dict[str, int]]:
 		"agent_assignment_open": agent_assignment_open,
 		"agent_assignment_snoozed": agent_assignment_snoozed,
 		"agent_assignment_waiting": agent_assignment_waiting,
+		"unassigned": metrics["totals"]["unassigned_open"],
+		"waiting": metrics["totals"]["waiting_first_reply"],
 	}
 
 
