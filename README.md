@@ -1,4 +1,4 @@
-# Tech Support Dashboard (Intercom)
+# Support Queue Live (SQL)
 
 Modern FastAPI dashboard to visualize live support metrics for Intercom team `5480079` using Intercom's REST API.
 
