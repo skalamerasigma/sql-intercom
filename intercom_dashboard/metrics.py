@@ -80,6 +80,8 @@ def compute_metrics_with_overrides(
 	team_id: int,
 	snoozed_total_override: Optional[int] = None,
 	open_total_override: Optional[int] = None,
+	unassigned_total_override: Optional[int] = None,
+	waiting_total_override: Optional[int] = None,
 	now_s: Optional[int] = None,
 ) -> Dict[str, Any]:
 	return _compute_metrics_internal(
@@ -89,6 +91,8 @@ def compute_metrics_with_overrides(
 		now_s,
 		snoozed_total_override,
 		open_total_override,
+		unassigned_total_override,
+		waiting_total_override,
 	)
 
 
@@ -99,6 +103,8 @@ def _compute_metrics_internal(
 	now_s: Optional[int] = None,
 	snoozed_total_override: Optional[int] = None,
 	open_total_override: Optional[int] = None,
+	unassigned_total_override: Optional[int] = None,
+	waiting_total_override: Optional[int] = None,
 ) -> Dict[str, Any]:
 	now = now_s or int(time.time())
 	open_convs = [c for c in conversations if _is_open(c) and c.get("team_assignee_id") == team_id]
@@ -177,8 +183,8 @@ def _compute_metrics_internal(
 		"totals": {
 			"open": int(open_total_override) if open_total_override is not None else len(open_convs),
 			"snoozed": int(snoozed_total_override) if snoozed_total_override is not None else len(snoozed_convs),
-			"unassigned_open": len(unassigned_open),
-			"waiting_first_reply": len(waiting_first_reply),
+			"unassigned_open": int(unassigned_total_override) if unassigned_total_override is not None else len(unassigned_open),
+			"waiting_first_reply": int(waiting_total_override) if waiting_total_override is not None else len(waiting_first_reply),
 		},
 		"wait_times": {
 			"average_minutes": round(avg_wait_time_min, 2),

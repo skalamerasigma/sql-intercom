@@ -62,7 +62,11 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		# Fetch open conversations as a SAMPLE plus total count; get snoozed count fast.
 		open_sample_task = asyncio.create_task(client.get_open_conversations_sampled_and_total(team_id, max_pages=1))
 		snoozed_count_task = asyncio.create_task(client.get_snoozed_count_for_team(team_id))
-		(open_sample, open_total), snoozed_total = await asyncio.gather(open_sample_task, snoozed_count_task)
+		unassigned_count_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
+		waiting_count_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
+		(open_sample, open_total), snoozed_total, unassigned_total, waiting_total = await asyncio.gather(
+			open_sample_task, snoozed_count_task, unassigned_count_task, waiting_count_task
+		)
 
 		data = compute_metrics_with_overrides(
 			conversations=open_sample,
@@ -70,6 +74,8 @@ async def metrics(team_id: int = TEAM_ID) -> Dict[str, Any]:
 			team_id=team_id,
 			snoozed_total_override=snoozed_total,
 			open_total_override=open_total,
+			unassigned_total_override=unassigned_total,
+			waiting_total_override=waiting_total,
 		)
 		return data
 	except Exception as exc:
