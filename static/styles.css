@@ -102,12 +102,19 @@ body {
 	padding: 0 16px 32px 16px;
 }
 
+.top-controls-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+	gap: 16px;
+}
 .nav-buttons {
-	margin-bottom: 20px;
 	display: flex;
 	gap: 12px;
 	align-items: center;
 	flex-wrap: wrap;
+	justify-content: flex-end;
 }
 .nav-button {
 	background: var(--card);
@@ -125,26 +132,32 @@ body {
 	border-color: rgba(255,255,255,0.2);
 	transform: translateY(-1px);
 }
+.tse-availability-container {
+	margin-bottom: 0;
+}
 .tse-availability {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	gap: 8px;
 	font-size: 13px;
-	margin-left: auto;
+	padding: 8px 16px;
+	background: var(--card);
+	border-radius: 8px;
 }
 .tse-availability-label {
-	opacity: 0.7;
+	opacity: 0.8;
 	font-weight: 500;
-	color: black;
+	color: var(--accent-6);
 }
 .tse-availability-count {
 	font-weight: 700;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-	color: black;
+	color: var(--accent-6);
 }
 .tse-availability-separator {
-	opacity: 0.3;
+	opacity: 0.5;
 	margin: 0 4px;
+	color: var(--accent-6);
 }
 .toggle-switch {
 	display: flex;
@@ -193,7 +206,7 @@ body {
 
 .kpis {
 	display: grid;
-	grid-template-columns: 2fr 1fr;
+	grid-template-columns: 2fr 1fr 1fr;
 	gap: 16px;
 	margin-bottom: 24px;
 }
@@ -212,41 +225,34 @@ body {
 	flex-direction: column;
 }
 .kpi-waiting-content {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr 1px 1fr;
 	gap: 0;
 	height: 100%;
-	flex: 1;
+	align-items: stretch;
 }
 .kpi-waiting-left {
-	flex: 0 0 auto;
 	display: flex;
 	flex-direction: column;
+	align-items: center;
 	justify-content: center;
 	padding-right: 32px;
-}
-.kpi-waiting-main-row {
-	display: flex;
-	align-items: flex-start;
-	width: 100%;
 }
 .kpi-waiting-value {
 	flex-shrink: 0;
 	line-height: 1;
 	margin-top: 12px;
+	margin-bottom: 12px;
 }
-.kpi-waiting-center {
-	flex: 0 0 auto;
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	padding-left: 32px;
-	padding-right: 32px;
-	border-right: 1px solid rgba(255,255,255,0.1);
-	min-width: 200px;
+.kpi-waiting-divider {
+	width: 1px;
+	background: rgba(255, 255, 255, 0.1);
+	height: 100%;
 }
 .kpi-waiting-metrics {
 	display: flex;
 	flex-direction: column;
+	align-items: center;
 	gap: 8px;
 }
 .priority-count-wrapper {
@@ -366,7 +372,6 @@ body {
 	font-style: italic;
 }
 .kpi-waiting-right {
-	flex: 1;
 	display: flex;
 	flex-direction: column;
 	padding-left: 32px;
@@ -422,6 +427,92 @@ body {
 .kpi-waiting-value {
 	font-size: 80px;
 	font-weight: 900;
+}
+.kpi-capacity {
+	background: var(--card);
+	border-top: 5px solid var(--accent-7);
+}
+.kpi-capacity-green {
+	border-top-color: var(--accent-7) !important;
+}
+.kpi-capacity-yellow {
+	border-top-color: var(--accent-6) !important;
+}
+.kpi-capacity-orange {
+	border-top-color: var(--accent-5) !important;
+}
+.kpi-capacity-red {
+	border-top-color: var(--accent-4) !important;
+}
+.capacity-content {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+.capacity-status-indicator {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+.capacity-status-badge {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.capacity-status-badge-green {
+	background: var(--accent-7);
+}
+.capacity-status-badge-yellow {
+	background: var(--accent-6);
+}
+.capacity-status-badge-orange {
+	background: var(--accent-5);
+}
+.capacity-status-badge-red {
+	background: var(--accent-4);
+}
+.capacity-status-text {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--text);
+}
+.capacity-metrics-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 12px;
+}
+.capacity-metric {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.capacity-metric-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	opacity: 0.7;
+	color: var(--text);
+}
+.capacity-metric-value {
+	font-size: 20px;
+	font-weight: 700;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	color: var(--text);
+}
+.capacity-recommendation {
+	padding: 10px 12px;
+	background: rgba(255, 255, 255, 0.05);
+	border-radius: 8px;
+	border-left: 3px solid var(--accent-2);
+	margin-top: 4px;
+}
+.capacity-recommendation-text {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text);
+	line-height: 1.4;
 }
 .kpi-open-snoozed {
 	background: var(--card);
@@ -693,14 +784,18 @@ body {
 		padding: 20px;
 	}
 	.kpi-waiting-content {
-		flex-direction: column;
-		gap: 16px;
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+	.kpi-waiting-divider {
+		display: none;
 	}
 	.kpi-waiting-right {
 		border-left: none;
 		border-top: 1px solid rgba(255,255,255,0.1);
 		padding-left: 0;
 		padding-top: 16px;
+		margin-top: 16px;
 	}
 	.kpi-waiting-value {
 		font-size: 60px;

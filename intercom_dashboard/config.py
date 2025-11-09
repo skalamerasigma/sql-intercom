@@ -32,4 +32,11 @@ BUSINESS_EXCLUDE_WEEKENDS: bool = os.getenv("BUSINESS_EXCLUDE_WEEKENDS", "true")
 # Demo mode config
 DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() in ("1", "true", "yes", "y", "on")
 
+# Capacity management config
+MAX_CHATS_PER_TSE: int = int(os.getenv("MAX_CHATS_PER_TSE", "5"))
+CAPACITY_WARNING_THRESHOLD: float = float(os.getenv("CAPACITY_WARNING_THRESHOLD", "0.8"))  # 80%
+CAPACITY_CAUTION_THRESHOLD: float = float(os.getenv("CAPACITY_CAUTION_THRESHOLD", "0.9"))  # 90%
+CAPACITY_CRITICAL_THRESHOLD: float = float(os.getenv("CAPACITY_CRITICAL_THRESHOLD", "0.95"))  # 95%
+SNOOZED_PROJECTION_HOURS: int = int(os.getenv("SNOOZED_PROJECTION_HOURS", "2"))  # Project 2 hours ahead
+
 

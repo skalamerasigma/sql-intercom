@@ -11,30 +11,33 @@
 	</div>
 
 	<main class="container">
-		<div class="nav-buttons">
-			<a href="/tse" class="nav-button">View TSE Table</a>
-			<div class="tse-availability">
-				<span class="tse-availability-label">Available TSE's:</span>
-				<span class="tse-availability-count" id="tse-available-count">—</span>
-				<span class="tse-availability-separator">|</span>
-				<span class="tse-availability-label">Away:</span>
-				<span class="tse-availability-count" id="tse-away-count">—</span>
+		<div class="top-controls-row">
+			<div class="tse-availability-container">
+				<div class="tse-availability">
+					<span class="tse-availability-label">Available TSE's:</span>
+					<span class="tse-availability-count" id="tse-available-count">—</span>
+					<span class="tse-availability-separator">|</span>
+					<span class="tse-availability-label">Away:</span>
+					<span class="tse-availability-count" id="tse-away-count">—</span>
+				</div>
 			</div>
-			{% if demo_mode %}
-			<div class="demo-badge">DEMO MODE</div>
-			{% endif %}
-			<button id="refresh-btn" class="refresh-button" title="Refresh metrics">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<polyline points="23 4 23 10 17 10"></polyline>
-					<polyline points="1 20 1 14 7 14"></polyline>
-					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-				</svg>
-			</button>
-			<label class="toggle-switch">
-				<input type="checkbox" id="today-only-toggle" checked>
-				<span class="toggle-slider"></span>
-				<span class="toggle-label">Today Only</span>
-			</label>
+			<div class="nav-buttons">
+				{% if demo_mode %}
+				<div class="demo-badge">DEMO MODE</div>
+				{% endif %}
+				<button id="refresh-btn" class="refresh-button" title="Refresh metrics">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="23 4 23 10 17 10"></polyline>
+						<polyline points="1 20 1 14 7 14"></polyline>
+						<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+					</svg>
+				</button>
+				<label class="toggle-switch">
+					<input type="checkbox" id="today-only-toggle" checked>
+					<span class="toggle-slider"></span>
+					<span class="toggle-label">Today Only</span>
+				</label>
+			</div>
 		</div>
 		
 		<section class="kpis">
@@ -42,11 +45,7 @@
 				<div class="kpi-waiting-content">
 					<div class="kpi-waiting-left">
 						<div class="kpi-title">Waiting 1st Reply</div>
-						<div class="kpi-waiting-main-row">
-							<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
-						</div>
-					</div>
-					<div class="kpi-waiting-center">
+						<div class="kpi-value kpi-waiting-value" id="kpi-waiting">—</div>
 						<div class="kpi-waiting-metrics">
 							<div class="priority-count-wrapper">
 								<span class="priority-count-label" id="priority-count-label">—</span>
@@ -68,11 +67,57 @@
 							</div>
 						</div>
 					</div>
+					<div class="kpi-waiting-divider"></div>
 					<div class="kpi-waiting-right">
 						<div class="top-waiting-title">Longest Wait Times</div>
 						<div class="top-waiting-list" id="top-waiting-list">
 							<div class="top-waiting-item">—</div>
 						</div>
+					</div>
+				</div>
+			</div>
+			<div class="kpi-card kpi-capacity" id="kpi-capacity-card">
+				<div class="kpi-title">Capacity Status</div>
+				<div class="capacity-content">
+					<div class="capacity-status-indicator" id="capacity-status-indicator">
+						<div class="capacity-status-badge" id="capacity-status-badge"></div>
+						<div class="capacity-status-text" id="capacity-status-text">—</div>
+					</div>
+					<div class="capacity-metrics-grid">
+						<div class="capacity-metric">
+							<div class="capacity-metric-label">Available Capacity</div>
+							<div class="capacity-metric-value" id="capacity-available">—</div>
+						</div>
+						<div class="capacity-metric">
+							<div class="capacity-metric-label">Utilization</div>
+							<div class="capacity-metric-value" id="capacity-utilization">—</div>
+						</div>
+						<div class="capacity-metric">
+							<div class="capacity-metric-label">At Capacity TSE's</div>
+							<div class="capacity-metric-value" id="capacity-at-capacity">—</div>
+						</div>
+						<div class="capacity-metric">
+							<div class="capacity-metric-label">Snoozed Returning (1h)</div>
+							<div class="capacity-metric-value" id="capacity-snoozed-returning">—</div>
+						</div>
+					</div>
+					<div class="capacity-recommendation" id="capacity-recommendation">
+						<div class="capacity-recommendation-text" id="capacity-recommendation-text">—</div>
+					</div>
+					<div class="chart-container" id="capacity-chart-container">
+						<svg class="mini-chart" id="capacity-chart" viewBox="0 0 200 85" preserveAspectRatio="none">
+							<defs>
+								<linearGradient id="capacity-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+									<stop offset="0%" style="stop-color:var(--accent-2);stop-opacity:0.3" />
+									<stop offset="100%" style="stop-color:var(--accent-2);stop-opacity:0" />
+								</linearGradient>
+							</defs>
+							<path class="chart-area" id="capacity-chart-area" fill="url(#capacity-gradient)" />
+							<path class="chart-line" id="capacity-chart-line" stroke="var(--accent-2)" stroke-width="2" fill="none" />
+							<g id="capacity-chart-points"></g>
+							<g id="capacity-chart-tooltip"></g>
+							<g id="capacity-chart-axis"></g>
+						</svg>
 					</div>
 				</div>
 			</div>
@@ -217,6 +262,7 @@
 		const chartData = {
 			waitTimes: [],
 			sla: [],
+			capacity: [],
 			dayKey: null,
 		};
 		
@@ -250,6 +296,18 @@
 				chartData.waitTimes.push({ value, timestamp });
 			}
 			
+			// Generate capacity utilization data (varying between 60-90%)
+			let baseCapacity = 70.0;
+			for (let i = 0; i < totalPoints; i++) {
+				const hoursBack = (totalPoints - i - 1) / pointsPerHour;
+				const timestamp = now - (hoursBack * 60 * 60 * 1000);
+				// Add some trend and random variation
+				const trend = (i / totalPoints) * 15; // Gradual increase
+				const variation = (Math.random() - 0.5) * 10; // Random variation
+				const value = Math.max(50, Math.min(95, baseCapacity + trend + variation));
+				chartData.capacity.push({ value, timestamp });
+			}
+			
 			// Generate SLA data (mostly high with occasional dips)
 			let baseSLA = 95.0;
 			for (let i = 0; i < totalPoints; i++) {
@@ -268,6 +326,9 @@
 			}
 			if (chartData.sla.length > 0) {
 				drawChart('sla-chart', chartData.sla, 100);
+			}
+			if (chartData.capacity.length > 0) {
+				drawChart('capacity-chart', chartData.capacity, 100);
 			}
 			{% endif %}
 		}
@@ -534,6 +595,73 @@
 			return payload;
 		}
 
+		async function fetchCapacity() {
+			const res = await fetch(`/api/capacity?team_id=${teamId}`, { cache: "no-store" });
+			let payload = null;
+			try { payload = await res.json(); } catch (_) { /* ignore non-JSON */ }
+			if (!res.ok) {
+				const msg = (payload && (payload.detail || payload.error)) || `${res.status} ${res.statusText}`;
+				throw new Error(msg);
+			}
+			return payload || {};
+		}
+
+		function updateCapacityWidget(capacityData) {
+			if (!capacityData || !capacityData.current_capacity) return;
+			
+			const cap = capacityData.current_capacity;
+			const proj = capacityData.projected_load || {};
+			const rec = capacityData.recommendation || {};
+			const alertLevel = capacityData.alert_level || "green";
+			const status = capacityData.status || "Optimal";
+			
+			// Update status badge (visual indicator) and text
+			const badge = document.getElementById("capacity-status-badge");
+			const statusText = document.getElementById("capacity-status-text");
+			if (badge) {
+				// Badge is a visual indicator, not text
+				badge.className = `capacity-status-badge capacity-status-badge-${alertLevel}`;
+			}
+			if (statusText) statusText.textContent = status;
+			
+			// Update card color based on alert level
+			const card = document.getElementById("kpi-capacity-card");
+			if (card) {
+				card.classList.remove("kpi-capacity-green", "kpi-capacity-yellow", "kpi-capacity-orange", "kpi-capacity-red");
+				card.classList.add(`kpi-capacity-${alertLevel}`);
+			}
+			
+			// Update metrics
+			setText("capacity-available", `${cap.available_capacity || 0} / ${cap.total_capacity || 0}`);
+			const utilization = Math.min(100, Math.max(0, cap.utilization_percent || 0)); // Cap at 100%
+			setText("capacity-utilization", `${utilization.toFixed(1)}%`);
+			setText("capacity-at-capacity", `${cap.at_capacity_tse_count || 0}`);
+			
+			const snoozedProj = capacityData.snoozed_projection || {};
+			setText("capacity-snoozed-returning", `${snoozedProj.returning_in_1h || 0}`);
+			
+			// Update recommendation
+			const recText = document.getElementById("capacity-recommendation-text");
+			if (recText) {
+				if (rec.action === "add_tse" && rec.count > 0) {
+					recText.textContent = `Add ${rec.count} TSE${rec.count > 1 ? "'s" : ""} to queue`;
+					recText.style.color = alertLevel === "red" ? "var(--accent-4)" : "var(--accent-6)";
+				} else if (rec.action === "monitor") {
+					recText.textContent = "Monitor closely";
+					recText.style.color = "var(--accent-6)";
+				} else {
+					recText.textContent = "No action needed";
+					recText.style.color = "var(--accent-7)";
+				}
+			}
+			
+			// Update capacity chart
+			if (cap.utilization_percent !== null && cap.utilization_percent !== undefined) {
+				addChartDataPoint('capacity', cap.utilization_percent);
+				drawChart('capacity-chart', chartData.capacity, 100); // Utilization is percentage
+			}
+		}
+
 		function filterTeamAdmins(admins) {
 			return (admins || []).filter(a => {
 				const ids = new Set((a.team_ids || []));
@@ -634,11 +762,14 @@
 
 		async function hydrate() {
 			try {
-				const [data, adminsData] = await Promise.all([fetchMetrics(), fetchAdmins()]);
+				const [data, adminsData, capacityData] = await Promise.all([fetchMetrics(), fetchAdmins(), fetchCapacity()]);
 				document.getElementById("error").style.display = "none";
 
 				// Update TSE availability counts
 				updateTSEAvailability(adminsData.admins || []);
+
+				// Update capacity widget
+				updateCapacityWidget(capacityData);
 
 				// Update Open/Snoozed visualization
 				updateOpenSnoozedChart(data.totals.open, data.totals.snoozed);

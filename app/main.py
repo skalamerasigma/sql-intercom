@@ -18,6 +18,7 @@ from intercom_dashboard.config import (
 from intercom_dashboard.intercom_client import IntercomClient
 from intercom_dashboard.metrics import compute_metrics_with_overrides
 from intercom_dashboard.demo_data import generate_demo_metrics, generate_demo_admins, get_demo_agent_assignments, generate_demo_conversations
+from intercom_dashboard.capacity import calculate_capacity_metrics
 
 
 @asynccontextmanager
@@ -161,6 +162,81 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		return ORJSONResponse(
 			{
 				"error": "failed_to_fetch_metrics",
+				"detail": str(exc),
+				"team_id": team_id,
+			},
+			status_code=status.HTTP_502_BAD_GATEWAY,
+		)
+
+
+@app.get("/api/capacity")
+async def capacity(team_id: int = TEAM_ID) -> Dict[str, Any]:
+	"""Get capacity management metrics and recommendations."""
+	if DEMO_MODE:
+		# Generate demo capacity data
+		demo_admins = generate_demo_admins()
+		agent_assignments = get_demo_agent_assignments()
+		demo_conversations = generate_demo_conversations(today_only=False)
+		demo_snoozed = [c for c in demo_conversations if c.get("state") == "snoozed"]
+		
+		# Add snoozed_until timestamps to demo snoozed conversations
+		import time
+		now = int(time.time())
+		for i, conv in enumerate(demo_snoozed[:10]):  # Limit to 10 for demo
+			conv["snoozed_until"] = now + (i * 1800)  # Stagger returns over 5 hours
+		
+		return calculate_capacity_metrics(
+			admins=demo_admins,
+			team_id=team_id,
+			agent_open_counts=agent_assignments["agent_assignment_open"],
+			agent_snoozed_counts=agent_assignments["agent_assignment_snoozed"],
+			snoozed_conversations=demo_snoozed,
+			unassigned_open_count=agent_assignments.get("unassigned", 5),
+			waiting_first_reply_count=agent_assignments.get("waiting", 8),
+		)
+	
+	client: IntercomClient = app.state.ic_client
+	try:
+		# Fetch required data in parallel
+		admins_task = asyncio.create_task(client.list_all_admins())
+		snoozed_convs_task = asyncio.create_task(client.get_snoozed_conversations_for_team(team_id))
+		unassigned_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
+		waiting_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
+		
+		admins, snoozed_convs, unassigned_total, waiting_total = await asyncio.gather(
+			admins_task, snoozed_convs_task, unassigned_task, waiting_task
+		)
+		
+		# Build per-agent counts
+		def _is_team_member(a: dict) -> bool:
+			ids = set(a.get("team_ids") or [])
+			pri = set((a.get("team_priority_level") or {}).get("primary_team_ids") or [])
+			return (team_id in ids) or (team_id in pri)
+		
+		team_admins = [a for a in admins if _is_team_member(a)]
+		open_tasks = [asyncio.create_task(client.count_open_for_admin(team_id, a.get("id"))) for a in team_admins]
+		snoozed_tasks = [asyncio.create_task(client.count_snoozed_for_admin(team_id, a.get("id"))) for a in team_admins]
+		
+		open_counts = await asyncio.gather(*open_tasks) if open_tasks else []
+		snoozed_counts = await asyncio.gather(*snoozed_tasks) if snoozed_tasks else []
+		
+		agent_open_counts = {str(team_admins[i].get("id")): int(open_counts[i] or 0) for i in range(len(team_admins))}
+		agent_snoozed_counts = {str(team_admins[i].get("id")): int(snoozed_counts[i] or 0) for i in range(len(team_admins))}
+		
+		# Calculate capacity metrics
+		return calculate_capacity_metrics(
+			admins=admins,
+			team_id=team_id,
+			agent_open_counts=agent_open_counts,
+			agent_snoozed_counts=agent_snoozed_counts,
+			snoozed_conversations=snoozed_convs,
+			unassigned_open_count=unassigned_total,
+			waiting_first_reply_count=waiting_total,
+		)
+	except Exception as exc:
+		return ORJSONResponse(
+			{
+				"error": "failed_to_fetch_capacity",
 				"detail": str(exc),
 				"team_id": team_id,
 			},
