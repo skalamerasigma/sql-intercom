@@ -91,9 +91,10 @@ def calculate_capacity_metrics(
 	# Project snoozed returns
 	snoozed_projection = project_snoozed_returns(snoozed_conversations, now)
 	
-	# Calculate projected load
-	projected_load_1h = total_open_load + snoozed_projection["returning_in_1h"]
-	projected_load_2h = total_open_load + snoozed_projection["returning_in_2h"]
+	# Calculate projected load (include unassigned conversations that need to be handled)
+	# Unassigned conversations represent work that needs capacity
+	projected_load_1h = total_open_load + unassigned_open_count + snoozed_projection["returning_in_1h"]
+	projected_load_2h = total_open_load + unassigned_open_count + snoozed_projection["returning_in_2h"]
 	
 	capacity_needed_1h = math.ceil(projected_load_1h / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 0
 	capacity_needed_2h = math.ceil(projected_load_2h / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 0
@@ -218,7 +219,12 @@ def determine_alert_level_and_recommendation(
 	utilization_ratio = utilization_percent / 100.0
 	
 	# Determine alert level
-	if utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or unassigned_count > 12 or at_capacity_tse_count >= (available_tse_count * 0.5):
+	# Special case: if no TSE's are available, it's always critical
+	if available_tse_count == 0 and unassigned_count > 0:
+		alert_level = "red"
+		status = "Critical"
+		urgency = "critical"
+	elif utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or unassigned_count > 12 or (available_tse_count > 0 and at_capacity_tse_count >= (available_tse_count * 0.5)):
 		alert_level = "red"
 		status = "Critical"
 		urgency = "critical"
