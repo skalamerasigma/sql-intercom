@@ -82,6 +82,7 @@ def compute_metrics_with_overrides(
 	open_total_override: Optional[int] = None,
 	unassigned_total_override: Optional[int] = None,
 	waiting_total_override: Optional[int] = None,
+	agent_assignment_override: Optional[Dict[str, int]] = None,
 	now_s: Optional[int] = None,
 ) -> Dict[str, Any]:
 	return _compute_metrics_internal(
@@ -93,6 +94,7 @@ def compute_metrics_with_overrides(
 		open_total_override,
 		unassigned_total_override,
 		waiting_total_override,
+		agent_assignment_override,
 	)
 
 
@@ -105,6 +107,7 @@ def _compute_metrics_internal(
 	open_total_override: Optional[int] = None,
 	unassigned_total_override: Optional[int] = None,
 	waiting_total_override: Optional[int] = None,
+	agent_assignment_override: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Any]:
 	now = now_s or int(time.time())
 	open_convs = [c for c in conversations if _is_open(c) and c.get("team_assignee_id") == team_id]
@@ -162,7 +165,7 @@ def _compute_metrics_internal(
 		return (team_id in team_ids) or (team_id in primary)
 
 	team_admins = [a for a in admins if _is_team_member(a)]
-	agent_assignment_counts = _group_by_admin(open_convs)
+	agent_assignment_counts = agent_assignment_override or _group_by_admin(open_convs)
 	agents = []
 	for a in team_admins:
 		aid = str(a.get("id"))
