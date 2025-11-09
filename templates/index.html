@@ -8,8 +8,8 @@
 </head>
 <body>
 	<header class="header">
-		<h1>Support Queue Live-Look-In</h1>
-		<div class="sub">Team <span id="team-id">{{ team_id }}</span> • Refresh every {{ refresh_interval }}s</div>
+		<img src="/static/sql-logo.svg" alt="SQL Logo" class="header-logo-left" />
+		<img src="/static/support-queue-live.svg" alt="Support Queue Live" class="header-logo-right" />
 	</header>
 
 	<div id="error" style="display:none; margin:12px auto; max-width:1200px; padding:10px 14px; border-radius:10px; background:#3b0a0a; color:#ffd4d4; border:1px solid #8a1f1f;">
@@ -100,7 +100,7 @@
 	</main>
 
 	<script>
-		const teamId = Number(document.getElementById("team-id").textContent);
+		const teamId = {{ team_id }};
 		const refreshIntervalSeconds = {{ refresh_interval }};
 
 		async function fetchMetrics() {
