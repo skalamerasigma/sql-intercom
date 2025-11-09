@@ -47,25 +47,25 @@ body {
 	height: auto;
 }
 .refresh-button {
-	background: rgba(12, 13, 14, 0.3);
-	border: 1px solid rgba(12, 13, 14, 0.4);
+	background: var(--card);
+	border: 1px solid rgba(255,255,255,0.1);
 	border-radius: 8px;
 	padding: 8px;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #0c0d0e;
+	color: var(--text);
 	transition: all 0.2s ease;
 }
 .refresh-button:hover {
-	background: rgba(12, 13, 14, 0.5);
-	border-color: rgba(12, 13, 14, 0.6);
+	background: rgba(255,255,255,0.05);
+	border-color: rgba(255,255,255,0.2);
 	transform: rotate(90deg);
 }
 .refresh-button:active {
 	transform: rotate(180deg);
-	background: rgba(12, 13, 14, 0.6);
+	background: rgba(255,255,255,0.08);
 }
 .refresh-button svg {
 	display: block;
