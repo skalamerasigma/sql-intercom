@@ -35,8 +35,8 @@ def calculate_capacity_metrics(
 		agent_open_counts: Dict mapping admin_id -> open chat count
 		agent_snoozed_counts: Dict mapping admin_id -> snoozed chat count
 		snoozed_conversations: List of snoozed conversation objects (with snoozed_until)
-		unassigned_open_count: Total unassigned open conversations
-		waiting_first_reply_count: Total waiting for first reply
+		unassigned_open_count: Total unassigned open conversations (for display only, not used in capacity calculation)
+		waiting_first_reply_count: Total waiting for first reply (used for capacity planning)
 		now_s: Current timestamp (Unix seconds), defaults to now
 	
 	Returns:
@@ -91,21 +91,20 @@ def calculate_capacity_metrics(
 	# Project snoozed returns
 	snoozed_projection = project_snoozed_returns(snoozed_conversations, now)
 	
-	# Calculate projected load (include unassigned conversations that need to be handled)
-	# Unassigned conversations represent work that needs capacity
-	# Debug: ensure unassigned_open_count is not None/0 when there's actually work
-	projected_load_1h = total_open_load + unassigned_open_count + snoozed_projection["returning_in_1h"]
-	projected_load_2h = total_open_load + unassigned_open_count + snoozed_projection["returning_in_2h"]
+	# Calculate projected load (include waiting conversations that need to be handled)
+	# Waiting first reply conversations represent work that needs capacity
+	projected_load_1h = total_open_load + waiting_first_reply_count + snoozed_projection["returning_in_1h"]
+	projected_load_2h = total_open_load + waiting_first_reply_count + snoozed_projection["returning_in_2h"]
 	
 	capacity_needed_1h = math.ceil(projected_load_1h / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 0
 	capacity_needed_2h = math.ceil(projected_load_2h / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 0
 	
 	# Determine alert level and recommendation
-	# Pass unassigned_open_count explicitly to ensure it's not lost
+	# Use waiting_first_reply_count instead of unassigned_open_count for capacity planning
 	alert_level, status, recommendation = determine_alert_level_and_recommendation(
 		utilization_percent,
 		available_capacity,
-		unassigned_open_count,  # This should be the actual unassigned count
+		waiting_first_reply_count,  # Use waiting count instead of unassigned
 		at_capacity_count,
 		available_tse_count,
 		snoozed_projection,
@@ -206,7 +205,7 @@ def _get_today_end_timestamp(now_s: int) -> int:
 def determine_alert_level_and_recommendation(
 	utilization_percent: float,
 	available_capacity: int,
-	unassigned_count: int,
+	waiting_count: int,  # Changed from unassigned_count to waiting_count
 	at_capacity_tse_count: int,
 	available_tse_count: int,
 	snoozed_projection: Dict[str, int],
@@ -217,6 +216,9 @@ def determine_alert_level_and_recommendation(
 	"""
 	Determine alert level and generate recommendation.
 	
+	Args:
+		waiting_count: Number of conversations waiting for first reply (used for capacity planning)
+	
 	Returns:
 		Tuple of (alert_level, status, recommendation_dict)
 	"""
@@ -225,7 +227,7 @@ def determine_alert_level_and_recommendation(
 	# Determine alert level
 	# Special case: if no TSE's are available but there's work to do, it's always critical
 	if available_tse_count == 0:
-		if unassigned_count > 0 or waiting_first_reply_count > 0:
+		if waiting_first_reply_count > 0:
 			alert_level = "red"
 			status = "Critical"
 			urgency = "critical"
@@ -234,15 +236,15 @@ def determine_alert_level_and_recommendation(
 			alert_level = "green"
 			status = "Optimal"
 			urgency = "low"
-	elif utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or unassigned_count > 12 or (available_tse_count > 0 and at_capacity_tse_count >= (available_tse_count * 0.5)):
+	elif utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or waiting_count > 12 or (available_tse_count > 0 and at_capacity_tse_count >= (available_tse_count * 0.5)):
 		alert_level = "red"
 		status = "Critical"
 		urgency = "critical"
-	elif utilization_ratio >= CAPACITY_CAUTION_THRESHOLD or unassigned_count > 7 or at_capacity_tse_count >= 3 or snoozed_projection["returning_in_1h"] > available_capacity:
+	elif utilization_ratio >= CAPACITY_CAUTION_THRESHOLD or waiting_count > 7 or at_capacity_tse_count >= 3 or snoozed_projection["returning_in_1h"] > available_capacity:
 		alert_level = "orange"
 		status = "Caution"
 		urgency = "high"
-	elif utilization_ratio >= CAPACITY_WARNING_THRESHOLD or unassigned_count > 3 or at_capacity_tse_count >= 2:
+	elif utilization_ratio >= CAPACITY_WARNING_THRESHOLD or waiting_count > 3 or at_capacity_tse_count >= 2:
 		alert_level = "yellow"
 		status = "Warning"
 		urgency = "medium"
@@ -258,14 +260,14 @@ def determine_alert_level_and_recommendation(
 		action = "add_tse"
 		# If no TSE's available, ensure we recommend at least enough to handle the work
 		if available_tse_count == 0:
-			# Calculate minimum TSE's needed based on unassigned conversations
-			# Use the larger of: capacity_needed_1h (which includes unassigned) or direct calculation
-			if unassigned_count > 0:
-				min_tse_needed = math.ceil(unassigned_count / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 1
+			# Calculate minimum TSE's needed based on waiting conversations
+			# Use the larger of: capacity_needed_1h (which includes waiting) or direct calculation
+			if waiting_count > 0:
+				min_tse_needed = math.ceil(waiting_count / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 1
 				count = max(capacity_needed_1h, min_tse_needed, 1)  # Ensure at least 1
 			else:
 				count = max(capacity_needed_1h, 1)  # Ensure at least 1
-			reason = f"No TSE's available. {unassigned_count} unassigned conversations need immediate attention."
+			reason = f"No TSE's available. {waiting_count} conversations waiting for first reply need immediate attention."
 		else:
 			count = max(additional_tse_needed, 1)  # At least 1
 			reason = "Critical capacity threshold exceeded. Immediate action required."
@@ -285,8 +287,8 @@ def determine_alert_level_and_recommendation(
 	# Adjust reason based on specific conditions
 	if snoozed_projection["returning_in_1h"] > available_capacity:
 		reason += f" {snoozed_projection['returning_in_1h']} snoozed chats returning in 1h will exceed capacity."
-	if unassigned_count > 5:
-		reason += f" {unassigned_count} unassigned conversations in queue."
+	if waiting_count > 5:
+		reason += f" {waiting_count} conversations waiting for first reply in queue."
 	
 	return (
 		alert_level,

@@ -224,10 +224,12 @@ async def capacity(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		agent_open_counts = {str(team_admins[i].get("id")): int(open_counts[i] or 0) for i in range(len(team_admins))}
 		agent_snoozed_counts = {str(team_admins[i].get("id")): int(snoozed_counts[i] or 0) for i in range(len(team_admins))}
 		
-		# Derive unassigned if API returned 0 (fallback calculation)
-		if not unassigned_total:
-			assigned_total = sum(agent_open_counts.values())
-			unassigned_total = max(0, int(open_total) - assigned_total)
+		# Always use fallback calculation (same as /api/metrics endpoint)
+		# The API's unassigned count query may not be reliable, so derive it from totals
+		assigned_total = sum(agent_open_counts.values())
+		# Use the larger of: API unassigned count OR calculated unassigned (total_open - assigned)
+		calculated_unassigned = max(0, int(open_total) - assigned_total)
+		unassigned_total = max(unassigned_total or 0, calculated_unassigned)
 		
 		# Calculate capacity metrics
 		return calculate_capacity_metrics(
