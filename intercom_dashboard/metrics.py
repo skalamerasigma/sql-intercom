@@ -4,7 +4,7 @@ import statistics
 import time
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from .config import SLA_FIRST_RESPONSE_MINUTES, BUSINESS_TZ, BUSINESS_HOURS_START, BUSINESS_HOURS_END
+from .config import SLA_FIRST_RESPONSE_MINUTES, BUSINESS_TZ, BUSINESS_HOURS_START, BUSINESS_HOURS_END, BUSINESS_EXCLUDE_WEEKENDS
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -52,6 +52,9 @@ def _is_within_business_hours(ts: int) -> bool:
 	"""
 	try:
 		dt_local = datetime.fromtimestamp(int(ts), tz=timezone.utc).astimezone(LOCAL_TZ)
+		# Optionally exclude weekends (Saturday=5, Sunday=6)
+		if BUSINESS_EXCLUDE_WEEKENDS and dt_local.weekday() >= 5:
+			return False
 		hour = dt_local.hour
 		return BUSINESS_HOURS_START <= hour < BUSINESS_HOURS_END
 	except Exception:
