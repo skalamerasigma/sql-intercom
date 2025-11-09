@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.python-version
+
+# Env & secrets
+.env
+.env.*
+
+# OS / Editors
+.DS_Store
+.idea/
+.vscode/
+
+# Builds / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# Node (in case of frontend assets later)
+node_modules/
+*.tsbuildinfo
+
+

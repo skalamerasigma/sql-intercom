@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Support Queue Live-Look-In</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<header class="header">
+		<h1>Support Queue Live-Look-In</h1>
+		<div class="sub">Team <span id="team-id">{{ team_id }}</span> • Refresh every {{ refresh_interval }}s</div>
+	</header>
+
+	<div id="error" style="display:none; margin:12px auto; max-width:1200px; padding:10px 14px; border-radius:10px; background:#3b0a0a; color:#ffd4d4; border:1px solid #8a1f1f;">
+	</div>
+
+	<main class="container">
+		<section class="kpis">
+			<div class="kpi-card kpi-open">
+				<div class="kpi-title">Open</div>
+				<div class="kpi-value" id="kpi-open">—</div>
+			</div>
+			<div class="kpi-card kpi-snoozed">
+				<div class="kpi-title">Snoozed</div>
+				<div class="kpi-value" id="kpi-snoozed">—</div>
+			</div>
+			<div class="kpi-card kpi-unassigned">
+				<div class="kpi-title">Unassigned</div>
+				<div class="kpi-value" id="kpi-unassigned">—</div>
+			</div>
+			<div class="kpi-card kpi-waiting">
+				<div class="kpi-title">Waiting 1st Reply</div>
+				<div class="kpi-value" id="kpi-waiting">—</div>
+			</div>
+		</section>
+
+		<section class="stats-grid">
+			<div class="panel">
+				<div class="panel-title">Wait Times</div>
+				<div class="metric-row">
+					<div class="metric">
+						<div class="metric-label">Average</div>
+						<div class="metric-value" id="wait-avg">—</div>
+					</div>
+					<div class="metric">
+						<div class="metric-label">P95</div>
+						<div class="metric-value" id="wait-p95">—</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel">
+				<div class="panel-title">SLA (First Response ≤ <span id="sla-min">—</span>m)</div>
+				<div class="metric-row">
+					<div class="metric">
+						<div class="metric-label">Adherence</div>
+						<div class="metric-value" id="sla-pct">—</div>
+					</div>
+					<div class="metric">
+						<div class="metric-label">Sample</div>
+						<div class="metric-value" id="sla-sample">—</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel">
+				<div class="panel-title">Ratings</div>
+				<div class="metric-row">
+					<div class="metric">
+						<div class="metric-label">Rated</div>
+						<div class="metric-value" id="rated">—</div>
+					</div>
+					<div class="metric">
+						<div class="metric-label">Positive</div>
+						<div class="metric-value" id="rated-pos">—</div>
+					</div>
+					<div class="metric">
+						<div class="metric-label">Negative</div>
+						<div class="metric-value" id="rated-neg">—</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="agents panel">
+			<div class="panel-title">Agents</div>
+			<table class="agents-table" id="agents-table">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Assigned</th>
+						<th>Away</th>
+						<th>Inbox Seat</th>
+						<th>Email</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</section>
+	</main>
+
+	<script>
+		const teamId = Number(document.getElementById("team-id").textContent);
+		const refreshIntervalSeconds = {{ refresh_interval }};
+
+		async function fetchMetrics() {
+			const res = await fetch(`/api/metrics?team_id=${teamId}`, { cache: "no-store" });
+			let payload = null;
+			try { payload = await res.json(); } catch (_) { /* ignore non-JSON */ }
+			if (!res.ok) {
+				const msg = (payload && (payload.detail || payload.error)) || `${res.status} ${res.statusText}`;
+				throw new Error(msg);
+			}
+			return payload || {};
+		}
+
+		function setText(id, value) {
+			document.getElementById(id).textContent = value;
+		}
+
+		function renderAgents(agents) {
+			const tbody = document.querySelector("#agents-table tbody");
+			tbody.innerHTML = "";
+			agents
+				.sort((a, b) => b.assigned_count - a.assigned_count)
+				.forEach(a => {
+					const tr = document.createElement("tr");
+					tr.innerHTML = `
+						<td>${a.name || "-"}</td>
+						<td class="mono">${a.assigned_count}</td>
+						<td>${a.away ? "Yes" : "No"}</td>
+						<td>${a.has_inbox_seat ? "Yes" : "No"}</td>
+						<td class="muted">${a.email || ""}</td>
+					`;
+					tbody.appendChild(tr);
+				});
+		}
+
+		async function hydrate() {
+			try {
+				const data = await fetchMetrics();
+				document.getElementById("error").style.display = "none";
+
+				setText("kpi-open", data.totals.open);
+				setText("kpi-snoozed", data.totals.snoozed);
+				setText("kpi-unassigned", data.totals.unassigned_open);
+				setText("kpi-waiting", data.totals.waiting_first_reply);
+
+				setText("wait-avg", data.wait_times.average_minutes + "m");
+				setText("wait-p95", data.wait_times.p95_minutes + "m");
+
+				setText("sla-min", data.sla.first_response_minutes);
+				setText("sla-pct", data.sla.adherence_percent + "%");
+				setText("sla-sample", data.sla.sample_size);
+
+				setText("rated", data.ratings.num_rated);
+				setText("rated-pos", data.ratings.positive);
+				setText("rated-neg", data.ratings.negative);
+
+				renderAgents(data.agents);
+			} catch (err) {
+				console.error(err);
+				const el = document.getElementById("error");
+				el.textContent = "Error loading metrics. " + (err && err.message ? err.message : "");
+				el.style.display = "block";
+			}
+		}
+
+		hydrate();
+		setInterval(hydrate, refreshIntervalSeconds * 1000);
+	</script>
+</body>
+</html>
+
+
