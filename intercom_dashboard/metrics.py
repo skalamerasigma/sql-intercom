@@ -36,7 +36,9 @@ def _is_snoozed(conv: Dict[str, Any]) -> bool:
 
 
 def _is_open(conv: Dict[str, Any]) -> bool:
-	return bool(conv.get("open", False))
+	# Treat only conversations with explicit "state":"open" as open,
+	# so snoozed conversations are excluded even if "open" is true in some payloads.
+	return conv.get("state") == "open"
 
 
 def _extract_rating(conv: Dict[str, Any]) -> Optional[Dict[str, Any]]:

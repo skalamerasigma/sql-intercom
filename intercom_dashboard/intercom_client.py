@@ -180,7 +180,7 @@ class IntercomClient:
 		convs, _ = await self.search_conversations_paginated(
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
-				{"field": "open", "operator": "=", "value": True},
+				{"field": "state", "operator": "=", "value": "open"},
 			]
 		)
 		return convs
@@ -209,7 +209,7 @@ class IntercomClient:
 		data = await self.search_conversations_one_page(
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
-				{"field": "open", "operator": "=", "value": True},
+				{"field": "state", "operator": "=", "value": "open"},
 				{"field": "admin_assignee_id", "operator": "=", "value": None},
 			],
 			per_page=1,
@@ -221,7 +221,7 @@ class IntercomClient:
 		data = await self.search_conversations_one_page(
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
-				{"field": "open", "operator": "=", "value": True},
+				{"field": "state", "operator": "=", "value": "open"},
 				{"field": "statistics.first_admin_reply_at", "operator": "=", "value": None},
 			],
 			per_page=1,
@@ -233,7 +233,7 @@ class IntercomClient:
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
 				{"field": "admin_assignee_id", "operator": "=", "value": str(admin_id)},
-				{"field": "open", "operator": "=", "value": True},
+				{"field": "state", "operator": "=", "value": "open"},
 			],
 			per_page=1,
 		)
@@ -256,7 +256,7 @@ class IntercomClient:
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
 				{"field": "admin_assignee_id", "operator": "=", "value": str(admin_id)},
-				{"field": "open", "operator": "=", "value": True},
+				{"field": "state", "operator": "=", "value": "open"},
 				{"field": "statistics.first_admin_reply_at", "operator": "=", "value": None},
 			],
 			per_page=1,
@@ -275,7 +275,7 @@ class IntercomClient:
 		return await self.search_conversations_sampled(
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
-				{"field": "open", "operator": "=", "value": True},
+				{"field": "state", "operator": "=", "value": "open"},
 			],
 			per_page=50,
 			max_pages=max_pages,
