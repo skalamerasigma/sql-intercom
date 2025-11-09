@@ -20,4 +20,9 @@ PER_PAGE: int = int(os.getenv("PER_PAGE", "150"))
 # Dashboard config
 REFRESH_INTERVAL_SECONDS: int = int(os.getenv("REFRESH_INTERVAL_SECONDS", "30"))
 
+# Business hours config (local time in America/Los_Angeles by default)
+BUSINESS_TZ: str = os.getenv("BUSINESS_TZ", "America/Los_Angeles")
+BUSINESS_HOURS_START: int = int(os.getenv("BUSINESS_HOURS_START", "6"))   # inclusive, 6 AM
+BUSINESS_HOURS_END: int = int(os.getenv("BUSINESS_HOURS_END", "18"))      # exclusive, 6 PM
+
 

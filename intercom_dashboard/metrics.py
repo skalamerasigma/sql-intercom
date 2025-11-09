@@ -4,9 +4,12 @@ import statistics
 import time
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from .config import SLA_FIRST_RESPONSE_MINUTES
+from .config import SLA_FIRST_RESPONSE_MINUTES, BUSINESS_TZ, BUSINESS_HOURS_START, BUSINESS_HOURS_END
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 SECONDS_PER_MINUTE = 60
+LOCAL_TZ = ZoneInfo(BUSINESS_TZ)
 
 
 def _is_waiting_for_first_reply(conv: Dict[str, Any]) -> bool:
@@ -39,6 +42,20 @@ def _is_open(conv: Dict[str, Any]) -> bool:
 	# Treat only conversations with explicit "state":"open" as open,
 	# so snoozed conversations are excluded even if "open" is true in some payloads.
 	return conv.get("state") == "open"
+
+
+def _is_within_business_hours(ts: int) -> bool:
+	"""
+	Returns True if the given UTC timestamp falls within business hours
+	in the configured timezone. Business hours are defined as
+	[BUSINESS_HOURS_START, BUSINESS_HOURS_END) local time.
+	"""
+	try:
+		dt_local = datetime.fromtimestamp(int(ts), tz=timezone.utc).astimezone(LOCAL_TZ)
+		hour = dt_local.hour
+		return BUSINESS_HOURS_START <= hour < BUSINESS_HOURS_END
+	except Exception:
+		return False
 
 
 def _extract_rating(conv: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -124,14 +141,22 @@ def _compute_metrics_internal(
 	waiting_first_reply = [c for c in open_convs if _is_waiting_for_first_reply(c)]
 
 	wait_times = [
-		_age_minutes_from_waiting_since(c, now) for c in waiting_first_reply
+		_age_minutes_from_waiting_since(c, now)
+		for c in waiting_first_reply
+		if _is_within_business_hours(c.get("waiting_since", 0))
 	]
 	wait_times = [w for w in wait_times if w is not None]
 	avg_wait_time_min = statistics.mean(wait_times) if wait_times else 0.0
 	p95_wait_time_min = statistics.quantiles(wait_times, n=20)[18] if len(wait_times) >= 20 else (max(wait_times) if wait_times else 0.0)
 
 	# SLA adherence: among conversations that have received first admin reply
-	first_reply_samples = [c for c in conversations if (c.get("team_assignee_id") == team_id)]
+	first_reply_samples = [
+		c
+		for c in conversations
+		if (c.get("team_assignee_id") == team_id)
+		and _is_within_business_hours((c.get("waiting_since") or 0))
+		and _is_within_business_hours(((c.get("statistics") or {}).get("first_admin_reply_at") or 0))
+	]
 	sla_results = [_first_response_met_sla(c, SLA_FIRST_RESPONSE_MINUTES) for c in first_reply_samples]
 	sla_results = [s for s in sla_results if s is not None]
 	sla_adherence_pct = (sum(1 for s in sla_results if s) / len(sla_results) * 100.0) if sla_results else 0.0
