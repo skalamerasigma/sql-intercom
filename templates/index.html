@@ -30,6 +30,13 @@
 	<main class="container">
 		<div class="nav-buttons">
 			<a href="/tse" class="nav-button">View TSE Table</a>
+			<div class="tse-availability">
+				<span class="tse-availability-label">Available TSE's:</span>
+				<span class="tse-availability-count" id="tse-available-count">—</span>
+				<span class="tse-availability-separator">|</span>
+				<span class="tse-availability-label">Away:</span>
+				<span class="tse-availability-count" id="tse-away-count">—</span>
+			</div>
 			<label class="toggle-switch">
 				<input type="checkbox" id="today-only-toggle" checked>
 				<span class="toggle-slider"></span>
@@ -528,6 +535,28 @@
 			document.getElementById(id).textContent = value;
 		}
 
+		async function fetchAdmins() {
+			const res = await fetch(`/api/agents`, { cache: "no-store" });
+			const payload = await res.json();
+			return payload;
+		}
+
+		function filterTeamAdmins(admins) {
+			return (admins || []).filter(a => {
+				const ids = new Set((a.team_ids || []));
+				const pri = new Set(((a.team_priority_level || {}).primary_team_ids || []));
+				return ids.has ? (ids.has(teamId) || pri.has(teamId)) : (ids.has === undefined ? (Array.isArray(a.team_ids) && a.team_ids.includes(teamId)) || (Array.isArray((a.team_priority_level || {}).primary_team_ids) && (a.team_priority_level.primary_team_ids || []).includes(teamId)) : false);
+			});
+		}
+
+		function updateTSEAvailability(admins) {
+			const teamAdmins = filterTeamAdmins(admins);
+			const available = teamAdmins.filter(a => !a.away_mode_enabled).length;
+			const away = teamAdmins.filter(a => a.away_mode_enabled).length;
+			
+			setText("tse-available-count", available);
+			setText("tse-away-count", away);
+		}
 
 		function updateOpenSnoozedChart(open, snoozed) {
 			// Snoozed is already included in Open, so total is just Open
@@ -612,8 +641,11 @@
 
 		async function hydrate() {
 			try {
-				const data = await fetchMetrics();
+				const [data, adminsData] = await Promise.all([fetchMetrics(), fetchAdmins()]);
 				document.getElementById("error").style.display = "none";
+
+				// Update TSE availability counts
+				updateTSEAvailability(adminsData.admins || []);
 
 				// Update Open/Snoozed visualization
 				updateOpenSnoozedChart(data.totals.open, data.totals.snoozed);
