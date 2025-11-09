@@ -87,7 +87,8 @@
 				<thead>
 					<tr>
 						<th>Name</th>
-						<th>Assigned</th>
+						<th>Open</th>
+						<th>Snoozed</th>
 						<th>Away</th>
 						<th>Inbox Seat</th>
 						<th>Email</th>
@@ -121,12 +122,13 @@
 			const tbody = document.querySelector("#agents-table tbody");
 			tbody.innerHTML = "";
 			agents
-				.sort((a, b) => b.assigned_count - a.assigned_count)
+				.sort((a, b) => (b.assigned_open + b.assigned_snoozed) - (a.assigned_open + a.assigned_snoozed))
 				.forEach(a => {
 					const tr = document.createElement("tr");
 					tr.innerHTML = `
 						<td>${a.name || "-"}</td>
-						<td class="mono">${a.assigned_count}</td>
+						<td class="mono">${a.assigned_open}</td>
+						<td class="mono">${a.assigned_snoozed}</td>
 						<td>${a.away ? "Yes" : "No"}</td>
 						<td>${a.has_inbox_seat ? "Yes" : "No"}</td>
 						<td class="muted">${a.email || ""}</td>
@@ -170,14 +172,15 @@
 				setText("rated-pos", data.ratings.positive);
 				setText("rated-neg", data.ratings.negative);
 
-				// Merge assignment counts from metrics with roster filtered to the team
+				// Merge assignment counts (open & snoozed) from metrics with roster filtered to the team
 				const roster = filterTeamAgents(admins).map(a => ({
 					id: String(a.id),
 					name: a.name,
 					email: a.email,
 					away: !!a.away_mode_enabled,
 					has_inbox_seat: !!a.has_inbox_seat,
-					assigned_count: (data.agent_assignment && data.agent_assignment[String(a.id)]) || 0
+					assigned_open: (data.agent_assignment_open && data.agent_assignment_open[String(a.id)]) || 0,
+					assigned_snoozed: (data.agent_assignment_snoozed && data.agent_assignment_snoozed[String(a.id)]) || 0,
 				}));
 				renderAgents(roster);
 			} catch (err) {

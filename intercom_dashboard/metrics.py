@@ -82,7 +82,8 @@ def compute_metrics_with_overrides(
 	open_total_override: Optional[int] = None,
 	unassigned_total_override: Optional[int] = None,
 	waiting_total_override: Optional[int] = None,
-	agent_assignment_override: Optional[Dict[str, int]] = None,
+	agent_assignment_open_override: Optional[Dict[str, int]] = None,
+	agent_assignment_snoozed_override: Optional[Dict[str, int]] = None,
 	now_s: Optional[int] = None,
 ) -> Dict[str, Any]:
 	return _compute_metrics_internal(
@@ -94,7 +95,8 @@ def compute_metrics_with_overrides(
 		open_total_override,
 		unassigned_total_override,
 		waiting_total_override,
-		agent_assignment_override,
+		agent_assignment_open_override,
+		agent_assignment_snoozed_override,
 	)
 
 
@@ -107,7 +109,8 @@ def _compute_metrics_internal(
 	open_total_override: Optional[int] = None,
 	unassigned_total_override: Optional[int] = None,
 	waiting_total_override: Optional[int] = None,
-	agent_assignment_override: Optional[Dict[str, int]] = None,
+	agent_assignment_open_override: Optional[Dict[str, int]] = None,
+	agent_assignment_snoozed_override: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Any]:
 	now = now_s or int(time.time())
 	open_convs = [c for c in conversations if _is_open(c) and c.get("team_assignee_id") == team_id]
@@ -165,7 +168,8 @@ def _compute_metrics_internal(
 		return (team_id in team_ids) or (team_id in primary)
 
 	team_admins = [a for a in admins if _is_team_member(a)]
-	agent_assignment_counts = agent_assignment_override or _group_by_admin(open_convs)
+	agent_assignment_open = agent_assignment_open_override or _group_by_admin(open_convs)
+	agent_assignment_snoozed = agent_assignment_snoozed_override or _group_by_admin(snoozed_convs)
 	agents = []
 	for a in team_admins:
 		aid = str(a.get("id"))
@@ -176,7 +180,8 @@ def _compute_metrics_internal(
 				"email": a.get("email"),
 				"away": bool(a.get("away_mode_enabled")),
 				"has_inbox_seat": bool(a.get("has_inbox_seat")),
-				"assigned_count": agent_assignment_counts.get(aid, 0),
+				"assigned_open": agent_assignment_open.get(aid, 0),
+				"assigned_snoozed": agent_assignment_snoozed.get(aid, 0),
 			}
 		)
 
@@ -204,7 +209,8 @@ def _compute_metrics_internal(
 			"negative": num_negative,
 		},
 		"agents": agents,
-		"agent_assignment": agent_assignment_counts,
+		"agent_assignment_open": agent_assignment_open,
+		"agent_assignment_snoozed": agent_assignment_snoozed,
 	}
 
 
