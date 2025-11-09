@@ -109,6 +109,7 @@ def calculate_capacity_metrics(
 		snoozed_projection,
 		capacity_needed_1h,
 		capacity_needed_2h,
+		waiting_first_reply_count,
 	)
 	
 	return {
@@ -209,6 +210,7 @@ def determine_alert_level_and_recommendation(
 	snoozed_projection: Dict[str, int],
 	capacity_needed_1h: int,
 	capacity_needed_2h: int,
+	waiting_first_reply_count: int = 0,
 ) -> Tuple[str, str, Dict[str, Any]]:
 	"""
 	Determine alert level and generate recommendation.
@@ -219,11 +221,17 @@ def determine_alert_level_and_recommendation(
 	utilization_ratio = utilization_percent / 100.0
 	
 	# Determine alert level
-	# Special case: if no TSE's are available, it's always critical
-	if available_tse_count == 0 and unassigned_count > 0:
-		alert_level = "red"
-		status = "Critical"
-		urgency = "critical"
+	# Special case: if no TSE's are available but there's work to do, it's always critical
+	if available_tse_count == 0:
+		if unassigned_count > 0 or waiting_first_reply_count > 0:
+			alert_level = "red"
+			status = "Critical"
+			urgency = "critical"
+		else:
+			# No work to do, so optimal
+			alert_level = "green"
+			status = "Optimal"
+			urgency = "low"
 	elif utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or unassigned_count > 12 or (available_tse_count > 0 and at_capacity_tse_count >= (available_tse_count * 0.5)):
 		alert_level = "red"
 		status = "Critical"
@@ -246,8 +254,13 @@ def determine_alert_level_and_recommendation(
 	
 	if alert_level == "red":
 		action = "add_tse"
-		count = max(additional_tse_needed, 1)  # At least 1
-		reason = "Critical capacity threshold exceeded. Immediate action required."
+		# If no TSE's available, ensure we recommend at least enough to handle the work
+		if available_tse_count == 0:
+			count = max(additional_tse_needed, math.ceil(unassigned_count / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 1)
+			reason = f"No TSE's available. {unassigned_count} unassigned conversations need immediate attention."
+		else:
+			count = max(additional_tse_needed, 1)  # At least 1
+			reason = "Critical capacity threshold exceeded. Immediate action required."
 	elif alert_level == "orange":
 		action = "add_tse" if additional_tse_needed > 0 else "monitor"
 		count = additional_tse_needed
