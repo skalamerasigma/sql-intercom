@@ -7,9 +7,12 @@
 	<link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-	<header class="header">
-		<img src="/static/sql-logo.svg" alt="SQL Logo" class="header-logo-left" />
-		<div class="header-right">
+	<div id="error" style="display:none; margin:12px auto; max-width:1200px; padding:10px 14px; border-radius:10px; background:#3b0a0a; color:#ffd4d4; border:1px solid #8a1f1f;">
+	</div>
+
+	<main class="container">
+		<div class="nav-buttons">
+			<a href="/" class="nav-button">Back to Dashboard</a>
 			<button id="refresh-btn" class="refresh-button" title="Refresh metrics">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<polyline points="23 4 23 10 17 10"></polyline>
@@ -17,16 +20,6 @@
 					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
 				</svg>
 			</button>
-			<img src="/static/support-queue-live.svg" alt="Support Queue Live" class="header-logo-right" />
-		</div>
-	</header>
-
-	<div id="error" style="display:none; margin:12px auto; max-width:1200px; padding:10px 14px; border-radius:10px; background:#3b0a0a; color:#ffd4d4; border:1px solid #8a1f1f;">
-	</div>
-
-	<main class="container">
-		<div class="nav-buttons">
-			<a href="/" class="nav-button">Back to Dashboard</a>
 		</div>
 
 		<section class="agents panel">
