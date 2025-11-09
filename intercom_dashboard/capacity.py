@@ -93,6 +93,7 @@ def calculate_capacity_metrics(
 	
 	# Calculate projected load (include unassigned conversations that need to be handled)
 	# Unassigned conversations represent work that needs capacity
+	# Debug: ensure unassigned_open_count is not None/0 when there's actually work
 	projected_load_1h = total_open_load + unassigned_open_count + snoozed_projection["returning_in_1h"]
 	projected_load_2h = total_open_load + unassigned_open_count + snoozed_projection["returning_in_2h"]
 	
@@ -100,10 +101,11 @@ def calculate_capacity_metrics(
 	capacity_needed_2h = math.ceil(projected_load_2h / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 else 0
 	
 	# Determine alert level and recommendation
+	# Pass unassigned_open_count explicitly to ensure it's not lost
 	alert_level, status, recommendation = determine_alert_level_and_recommendation(
 		utilization_percent,
 		available_capacity,
-		unassigned_open_count,
+		unassigned_open_count,  # This should be the actual unassigned count
 		at_capacity_count,
 		available_tse_count,
 		snoozed_projection,

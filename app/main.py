@@ -202,9 +202,10 @@ async def capacity(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		snoozed_convs_task = asyncio.create_task(client.get_snoozed_conversations_for_team(team_id))
 		unassigned_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
 		waiting_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
+		open_total_task = asyncio.create_task(client.get_open_conversations_sampled_and_total(team_id, max_pages=1))
 		
-		admins, snoozed_convs, unassigned_total, waiting_total = await asyncio.gather(
-			admins_task, snoozed_convs_task, unassigned_task, waiting_task
+		admins, snoozed_convs, unassigned_total, waiting_total, (open_sample, open_total) = await asyncio.gather(
+			admins_task, snoozed_convs_task, unassigned_task, waiting_task, open_total_task
 		)
 		
 		# Build per-agent counts
@@ -222,6 +223,11 @@ async def capacity(team_id: int = TEAM_ID) -> Dict[str, Any]:
 		
 		agent_open_counts = {str(team_admins[i].get("id")): int(open_counts[i] or 0) for i in range(len(team_admins))}
 		agent_snoozed_counts = {str(team_admins[i].get("id")): int(snoozed_counts[i] or 0) for i in range(len(team_admins))}
+		
+		# Derive unassigned if API returned 0 (fallback calculation)
+		if not unassigned_total:
+			assigned_total = sum(agent_open_counts.values())
+			unassigned_total = max(0, int(open_total) - assigned_total)
 		
 		# Calculate capacity metrics
 		return calculate_capacity_metrics(

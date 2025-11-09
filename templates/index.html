@@ -614,6 +614,16 @@
 			const rec = capacityData.recommendation || {};
 			const alertLevel = capacityData.alert_level || "green";
 			const status = capacityData.status || "Optimal";
+			const queueMetrics = capacityData.queue_metrics || {};
+			
+			// Debug: log the full capacity data to see what's being returned
+			console.log("Full capacity data:", {
+				unassigned_from_queue_metrics: queueMetrics.unassigned,
+				unassigned_from_recommendation: rec.reason,
+				recommendation: rec,
+				alert_level: alertLevel,
+				current_capacity: cap,
+			});
 			
 			// Update status badge (visual indicator) and text
 			const badge = document.getElementById("capacity-status-badge");
