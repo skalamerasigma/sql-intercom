@@ -761,6 +761,18 @@
 			}
 		}
 
+		function formatWaitTime(minutes) {
+			if (minutes < 60) {
+				return `${Math.round(minutes)}m`;
+			}
+			const hours = Math.floor(minutes / 60);
+			const mins = Math.round(minutes % 60);
+			if (mins === 0) {
+				return `${hours}h`;
+			}
+			return `${hours}h ${mins}m`;
+		}
+
 		function updateRatingsGauge(ratings) {
 			const gaugeArc = document.getElementById("gauge-arc");
 			const gaugePercent = document.getElementById("gauge-percent");
@@ -864,9 +876,10 @@
 							: '<span class="top-waiting-admin unassigned">Unassigned</span>';
 						const priorityBadge = item.priority ? '<span class="top-waiting-priority-badge">PRIORITY</span>' : '';
 						const priorityClass = item.priority ? ' top-waiting-item-priority' : '';
+						const formattedTime = formatWaitTime(item.wait_minutes);
 						return `
 							<div class="top-waiting-item${priorityClass}">
-								<span class="top-waiting-time">${item.wait_minutes}m</span>
+								<span class="top-waiting-time">${formattedTime}</span>
 								${priorityBadge}
 								${adminInfo}
 							</div>
@@ -895,11 +908,12 @@
 							const contactInfo = conv.contact_email 
 								? `${conv.contact_name} (${conv.contact_email})`
 								: conv.contact_name;
+							const formattedTime = formatWaitTime(conv.wait_minutes);
 							return `
 								<a href="${conv.intercom_url}" target="_blank" class="tooltip-item">
 									<div class="tooltip-item-header">
 										<span class="tooltip-item-title">${conv.title}</span>
-										<span class="tooltip-item-time">${conv.wait_minutes}m</span>
+										<span class="tooltip-item-time">${formattedTime}</span>
 									</div>
 									<div class="tooltip-item-details">
 										<div class="tooltip-item-contact">${contactInfo}</div>
