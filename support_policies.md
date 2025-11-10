@@ -11,6 +11,12 @@ You're encouraged to spend extra time in the office to ramp up, ask questions, a
  
 Chat Shifts
 
+For on‑chat work, each TSE is expected to handle an average of about 16 new chats per day across their scheduled work week, with consideration for overall volume and staffing. 
+
+Recent leadership notes add nuance: 10–12 chats per day is considered sustainable; 16 per day is viewed as too high for long‑term pacing and is a target to reduce via staffing and process changes. 
+
+SMEs or specialized roles may have different chat targets during pilots (e.g., fewer on‑chat new chats balanced with routed complex work), so expectations can vary by assignment. 
+
 Our team are responsible for providing live support to customers via chat and are available from 2am - 6pm PT. 
 	•	The team schedule can be found in the TSE Hourly Blocks Schedule. The schedule is based on the number of people we need on live chats and office hours throughout the day. 
 	•	See Support Shift Expectations for a complete overview of on chat responsibilities. 

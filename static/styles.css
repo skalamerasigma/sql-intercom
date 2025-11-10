@@ -238,15 +238,18 @@ body {
 }
 .kpi-waiting-featured {
 	min-height: 140px;
+	max-height: 600px;
 	padding: 24px;
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
 }
 .kpi-waiting-content {
 	display: grid;
 	grid-template-columns: 1fr 1px 1fr;
 	gap: 0;
 	height: 100%;
+	min-height: 0;
 	align-items: stretch;
 }
 .kpi-waiting-left {
@@ -401,6 +404,8 @@ body {
 	display: flex;
 	flex-direction: column;
 	padding-left: 32px;
+	min-height: 0;
+	flex: 1;
 }
 .top-waiting-title {
 	font-size: 11px;
@@ -415,7 +420,7 @@ body {
 	flex-direction: column;
 	gap: 8px;
 	flex: 1;
-	max-height: 400px;
+	min-height: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
 }
