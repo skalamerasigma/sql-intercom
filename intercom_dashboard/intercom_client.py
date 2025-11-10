@@ -272,7 +272,7 @@ class IntercomClient:
 	
 	async def get_unassigned_conversations_for_team(self, team_id: int, max_pages: int = 10) -> List[Dict[str, Any]]:
 		"""Fetch unassigned open conversations for a team."""
-		convs, _ = await self.search_conversations_paginated(
+		convs, _ = await self.search_conversations_sampled(
 			[
 				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
 				{"field": "state", "operator": "=", "value": "open"},
