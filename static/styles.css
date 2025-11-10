@@ -242,7 +242,6 @@ body {
 }
 .kpi-waiting-featured {
 	min-height: 140px;
-	height: 100%;
 	padding: 24px;
 	display: flex;
 	flex-direction: column;
@@ -254,7 +253,6 @@ body {
 	gap: 0;
 	flex: 1;
 	min-height: 0;
-	max-height: 100%;
 	align-items: stretch;
 	overflow: visible;
 }
@@ -543,6 +541,8 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 14px;
+	flex: 1;
+	min-height: 0;
 }
 .capacity-status-indicator {
 	display: flex;
@@ -632,6 +632,8 @@ body {
 	align-items: center;
 	gap: 16px;
 	padding: 8px 0;
+	flex: 1;
+	min-height: 0;
 }
 .open-snoozed-chart {
 	width: 140px;
