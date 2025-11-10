@@ -120,7 +120,7 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		unassigned_count_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
 		unassigned_convs_task = asyncio.create_task(client.get_unassigned_conversations_for_team(team_id, max_pages=10))
 		waiting_count_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
-		waiting_convs_task = asyncio.create_task(client.get_waiting_conversations_for_team(team_id, max_pages=10))
+		waiting_convs_task = asyncio.create_task(client.get_waiting_conversations_for_team(team_id, max_pages=20))
 		admins_task = asyncio.create_task(client.list_all_admins())
 		(open_sample, open_total), snoozed_total, unassigned_total, unassigned_convs, waiting_total, waiting_convs, admins = await asyncio.gather(
 			open_sample_task, snoozed_count_task, unassigned_count_task, unassigned_convs_task, waiting_count_task, waiting_convs_task, admins_task
@@ -149,6 +149,26 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		# (waiting_convs and unassigned_convs are subsets of open conversations)
 		all_convs_for_metrics = list({c.get("id"): c for c in open_sample + waiting_convs + unassigned_convs}.values())
 		
+		# Verify waiting count by actually filtering the fetched waiting conversations
+		# The API count might be inaccurate, so we'll verify each conversation meets our criteria
+		from intercom_dashboard.metrics import _is_waiting_for_first_reply, _is_open
+		# Filter waiting_convs to only include those that actually meet our criteria
+		verified_waiting_convs = [c for c in waiting_convs if _is_open(c) and _is_waiting_for_first_reply(c)]
+		verified_waiting_count = len(verified_waiting_convs)
+		
+		# If verified count is 0 but API says there are waiting conversations,
+		# the API query is likely wrong - use 0
+		# If verified count differs significantly, use verified count (we fetched up to 10 pages = 500 conversations)
+		if verified_waiting_count == 0:
+			# Our sample shows 0 waiting conversations - trust this over API
+			use_waiting_total = 0
+		elif len(waiting_convs) >= 50 and abs(verified_waiting_count - waiting_total) > 2:
+			# We have a good sample and it differs from API - use verified count
+			use_waiting_total = verified_waiting_count
+		else:
+			# Use API count if it's close to verified or we don't have enough sample
+			use_waiting_total = waiting_total
+		
 		data = compute_metrics_with_overrides(
 			conversations=all_convs_for_metrics,
 			admins=admins,
@@ -156,7 +176,7 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 			snoozed_total_override=snoozed_total,
 			open_total_override=open_total,
 			unassigned_total_override=unassigned_total,
-			waiting_total_override=waiting_total,
+			waiting_total_override=use_waiting_total,
 			agent_assignment_open_override=agent_assignment_open,
 			agent_assignment_snoozed_override=agent_assignment_snoozed,
 			agent_assignment_waiting_override=agent_assignment_waiting,

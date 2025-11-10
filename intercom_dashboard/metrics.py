@@ -13,10 +13,13 @@ LOCAL_TZ = ZoneInfo(BUSINESS_TZ)
 
 
 def _is_waiting_for_first_reply(conv: Dict[str, Any]) -> bool:
-	if not conv.get("open", False):
+	# Must be open (not snoozed) and have no first admin reply
+	if not _is_open(conv):
 		return False
 	stats = conv.get("statistics") or {}
-	return stats.get("first_admin_reply_at") in (None, 0)
+	first_admin_reply_at = stats.get("first_admin_reply_at")
+	# Check for None or 0 (some APIs return 0 instead of None)
+	return first_admin_reply_at in (None, 0) or first_admin_reply_at == ""
 
 
 def _age_minutes_from_waiting_since(conv: Dict[str, Any], now_s: Optional[int] = None) -> Optional[float]:
