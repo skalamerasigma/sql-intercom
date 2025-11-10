@@ -299,6 +299,14 @@ def _compute_metrics_internal(
 		admin = admin_map.get(admin_id) if admin_id else None
 		conv_id = str(conv.get("id") or "")
 		is_priority = conv.get("priority") == "priority"
+		
+		# Get contact/author info (same as priority_waiting)
+		source = conv.get("source", {})
+		author = source.get("author", {}) if isinstance(source, dict) else {}
+		contacts = conv.get("contacts", {})
+		contact_list = contacts.get("contacts", []) if isinstance(contacts, dict) else []
+		contact = contact_list[0] if contact_list else {}
+		
 		top_10_formatted.append({
 			"conversation_id": conv_id,
 			"wait_minutes": round(item["wait_minutes"], 1),
@@ -307,6 +315,9 @@ def _compute_metrics_internal(
 			"assigned": bool(admin_id and admin),
 			"priority": is_priority,
 			"intercom_url": f"https://app.intercom.com/a/inbox/{conv_id}" if conv_id else None,
+			"contact_name": author.get("name") or contact.get("name") or "Unknown",
+			"contact_email": author.get("email") or contact.get("email") or None,
+			"title": conv.get("title") or source.get("subject") or "No subject",
 		})
 	
 	# Format priority waiting conversations with admin info
@@ -368,5 +379,61 @@ def _compute_metrics_internal(
 		"agent_assignment_snoozed": agent_assignment_snoozed,
 		"agent_assignment_waiting": agent_assignment_waiting,
 	}
+
+
+def format_unassigned_conversations(
+	unassigned_conversations: List[Dict[str, Any]],
+	admins: List[Dict[str, Any]],
+	now_s: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+	"""
+	Format unassigned conversations with contact info and wait times.
+	
+	Args:
+		unassigned_conversations: List of unassigned conversation objects
+		admins: List of admin objects for lookup
+		now_s: Current timestamp (Unix seconds), defaults to now
+	
+	Returns:
+		List of formatted unassigned conversation dictionaries
+	"""
+	now = now_s or int(time.time())
+	admin_map = {str(a.get("id")): a for a in admins}
+	
+	# Calculate wait times for unassigned conversations
+	unassigned_with_times = [
+		{
+			"conversation": c,
+			"wait_minutes": _age_minutes_from_waiting_since(c, now) or 0.0,
+		}
+		for c in unassigned_conversations
+	]
+	unassigned_with_times.sort(key=lambda x: x["wait_minutes"], reverse=True)
+	
+	# Format unassigned conversations with contact info
+	unassigned_formatted = []
+	for item in unassigned_with_times:
+		conv = item["conversation"]
+		conv_id = str(conv.get("id") or "")
+		
+		# Get contact/author info
+		source = conv.get("source", {})
+		author = source.get("author", {}) if isinstance(source, dict) else {}
+		contacts = conv.get("contacts", {})
+		contact_list = contacts.get("contacts", []) if isinstance(contacts, dict) else []
+		contact = contact_list[0] if contact_list else {}
+		
+		unassigned_formatted.append({
+			"conversation_id": conv_id,
+			"wait_minutes": round(item["wait_minutes"], 1),
+			"assigned": False,  # Always False for unassigned
+			"priority": conv.get("priority") == "priority",
+			"intercom_url": f"https://app.intercom.com/a/inbox/{conv_id}" if conv_id else None,
+			"contact_name": author.get("name") or contact.get("name") or "Unknown",
+			"contact_email": author.get("email") or contact.get("email") or None,
+			"title": conv.get("title") or source.get("subject") or "No subject",
+		})
+	
+	return unassigned_formatted
 
 

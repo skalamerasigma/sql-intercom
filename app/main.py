@@ -16,7 +16,7 @@ from intercom_dashboard.config import (
 	DEMO_MODE,
 )
 from intercom_dashboard.intercom_client import IntercomClient
-from intercom_dashboard.metrics import compute_metrics_with_overrides
+from intercom_dashboard.metrics import compute_metrics_with_overrides, format_unassigned_conversations
 from intercom_dashboard.demo_data import generate_demo_metrics, generate_demo_admins, get_demo_agent_assignments, generate_demo_conversations
 from intercom_dashboard.capacity import calculate_capacity_metrics
 
@@ -84,6 +84,7 @@ async def agents() -> Dict[str, Any]:
 async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, Any]:
 	if DEMO_MODE:
 		# Generate demo data
+		import time
 		demo_metrics_base = generate_demo_metrics()
 		demo_admins = generate_demo_admins()
 		agent_assignments = get_demo_agent_assignments()
@@ -106,6 +107,9 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		# Override with demo-specific data
 		demo_metrics["top_10_waiting"] = demo_metrics_base["top_10_waiting"]
 		demo_metrics["priority_waiting"] = demo_metrics_base["priority_waiting"]
+		# Generate demo unassigned conversations
+		demo_unassigned = [c for c in demo_conversations if c.get("state") == "open" and not c.get("admin_assignee_id")]
+		demo_metrics["unassigned_conversations"] = format_unassigned_conversations(demo_unassigned, demo_admins, now_s=int(time.time()))
 		return demo_metrics
 	
 	client: IntercomClient = app.state.ic_client
@@ -114,11 +118,12 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		open_sample_task = asyncio.create_task(client.get_open_conversations_sampled_and_total(team_id, max_pages=1))
 		snoozed_count_task = asyncio.create_task(client.get_snoozed_count_for_team(team_id))
 		unassigned_count_task = asyncio.create_task(client.count_unassigned_open_for_team(team_id))
+		unassigned_convs_task = asyncio.create_task(client.get_unassigned_conversations_for_team(team_id, max_pages=10))
 		waiting_count_task = asyncio.create_task(client.count_waiting_first_reply_for_team(team_id))
 		waiting_convs_task = asyncio.create_task(client.get_waiting_conversations_for_team(team_id, max_pages=10))
 		admins_task = asyncio.create_task(client.list_all_admins())
-		(open_sample, open_total), snoozed_total, unassigned_total, waiting_total, waiting_convs, admins = await asyncio.gather(
-			open_sample_task, snoozed_count_task, unassigned_count_task, waiting_count_task, waiting_convs_task, admins_task
+		(open_sample, open_total), snoozed_total, unassigned_total, unassigned_convs, waiting_total, waiting_convs, admins = await asyncio.gather(
+			open_sample_task, snoozed_count_task, unassigned_count_task, unassigned_convs_task, waiting_count_task, waiting_convs_task, admins_task
 		)
 
 		# Build exact per-agent open counts (parallel)
@@ -140,9 +145,9 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 		if not unassigned_total:
 			unassigned_total = max(0, int(open_total) - sum(agent_assignment_open.values()))
 
-		# Combine open_sample with waiting_convs for metrics computation
-		# (waiting_convs are a subset of open conversations, so we need both for accurate top 5)
-		all_convs_for_metrics = list({c.get("id"): c for c in open_sample + waiting_convs}.values())
+		# Combine open_sample with waiting_convs and unassigned_convs for metrics computation
+		# (waiting_convs and unassigned_convs are subsets of open conversations)
+		all_convs_for_metrics = list({c.get("id"): c for c in open_sample + waiting_convs + unassigned_convs}.values())
 		
 		data = compute_metrics_with_overrides(
 			conversations=all_convs_for_metrics,
@@ -157,6 +162,11 @@ async def metrics(team_id: int = TEAM_ID, today_only: bool = True) -> Dict[str, 
 			agent_assignment_waiting_override=agent_assignment_waiting,
 			today_only=today_only,
 		)
+		
+		# Add unassigned conversations list to the response (similar to priority_waiting)
+		import time
+		data["unassigned_conversations"] = format_unassigned_conversations(unassigned_convs, admins, now_s=int(time.time()))
+		
 		return data
 	except Exception as exc:
 		return ORJSONResponse(

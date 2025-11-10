@@ -424,6 +424,37 @@ body {
 	padding: 6px 0;
 	border-bottom: 1px solid rgba(255,255,255,0.05);
 	gap: 8px;
+	position: relative;
+	cursor: pointer;
+}
+.top-waiting-item-with-tooltip:hover {
+	opacity: 0.9;
+}
+.top-waiting-tooltip {
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	margin-bottom: 8px;
+	background: var(--card);
+	border: 1px solid rgba(255,255,255,0.15);
+	border-radius: 8px;
+	box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+	padding: 0;
+	min-width: 280px;
+	max-width: 400px;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateX(-50%) translateY(4px);
+	transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+	z-index: 1000;
+	pointer-events: none;
+}
+.top-waiting-item-with-tooltip:hover .top-waiting-tooltip {
+	opacity: 1;
+	visibility: visible;
+	transform: translateX(-50%) translateY(0);
+	pointer-events: auto;
 }
 .top-waiting-item-priority {
 	background: rgba(253, 135, 137, 0.1);

@@ -270,6 +270,18 @@ class IntercomClient:
 		)
 		return int(data.get("total_count") or 0)
 	
+	async def get_unassigned_conversations_for_team(self, team_id: int, max_pages: int = 10) -> List[Dict[str, Any]]:
+		"""Fetch unassigned open conversations for a team."""
+		convs, _ = await self.search_conversations_paginated(
+			[
+				{"field": "team_assignee_id", "operator": "=", "value": str(team_id)},
+				{"field": "state", "operator": "=", "value": "open"},
+				{"field": "admin_assignee_id", "operator": "=", "value": None},
+			],
+			max_pages=max_pages,
+		)
+		return convs
+	
 	async def count_waiting_first_reply_for_team(self, team_id: int) -> int:
 		# Waiting = open and first_admin_reply_at is null
 		data = await self.search_conversations_one_page(

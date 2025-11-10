@@ -45,6 +45,19 @@ def generate_demo_metrics() -> Dict[str, Any]:
 			"Erica Chase", "Stipo Josipovic", "Alex Johnson", 
 			"Sarah Martinez", "Mike Chen", None
 		]) if assigned else None
+		contact_name = random.choice([
+			"John Smith", "Jane Doe", "Robert Johnson", "Emily Davis",
+			"Michael Brown", "Sarah Wilson", "David Lee", "Lisa Anderson"
+		])
+		contact_email = f"{contact_name.lower().replace(' ', '.')}@example.com"
+		title = random.choice([
+			"Account access issue",
+			"Billing question",
+			"Feature request",
+			"Technical support needed",
+			"Product inquiry",
+			"Integration help",
+		])
 		top_10_waiting.append({
 			"conversation_id": f"demo_conv_{i+1}",
 			"wait_minutes": wait_minutes,
@@ -53,6 +66,9 @@ def generate_demo_metrics() -> Dict[str, Any]:
 			"assigned": assigned,
 			"priority": is_priority,
 			"intercom_url": f"https://app.intercom.com/a/inbox/demo_conv_{i+1}",
+			"contact_name": contact_name,
+			"contact_email": contact_email,
+			"title": title,
 		})
 	top_10_waiting.sort(key=lambda x: x["wait_minutes"], reverse=True)
 	
