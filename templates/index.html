@@ -111,7 +111,9 @@
 						</div>
 						<div class="capacity-at-capacity-display">
 							<div class="capacity-at-capacity-label">At Capacity TSE's</div>
-							<div class="capacity-at-capacity-value" id="capacity-at-capacity">—</div>
+							<div class="capacity-at-capacity-visualization" id="capacity-at-capacity-visualization">
+								<!-- TSE indicators will be generated here -->
+							</div>
 						</div>
 					</div>
 					<div class="capacity-recommendation" id="capacity-recommendation">
@@ -693,8 +695,23 @@
 				gaugeValue.textContent = `${utilization.toFixed(1)}%`;
 			}
 			
-			// Update at capacity TSE's
-			setText("capacity-at-capacity", `${cap.at_capacity_tse_count || 0}`);
+			// Update at capacity TSE's visualization
+			const atCapacityCount = cap.at_capacity_tse_count || 0;
+			const atCapacityViz = document.getElementById("capacity-at-capacity-visualization");
+			if (atCapacityViz) {
+				atCapacityViz.innerHTML = '';
+				for (let i = 0; i < atCapacityCount; i++) {
+					const indicator = document.createElement('div');
+					indicator.className = 'capacity-tse-indicator';
+					atCapacityViz.appendChild(indicator);
+				}
+				// If no TSEs at capacity, show a subtle indicator
+				if (atCapacityCount === 0) {
+					const emptyIndicator = document.createElement('div');
+					emptyIndicator.className = 'capacity-tse-indicator capacity-tse-indicator-empty';
+					atCapacityViz.appendChild(emptyIndicator);
+				}
+			}
 			
 			// Update recommendation
 			const recText = document.getElementById("capacity-recommendation-text");
