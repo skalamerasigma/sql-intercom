@@ -415,6 +415,23 @@ body {
 	flex-direction: column;
 	gap: 8px;
 	flex: 1;
+	max-height: 400px;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+.top-waiting-list::-webkit-scrollbar {
+	width: 6px;
+}
+.top-waiting-list::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.05);
+	border-radius: 3px;
+}
+.top-waiting-list::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 3px;
+}
+.top-waiting-list::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.3);
 }
 .top-waiting-item {
 	display: flex;

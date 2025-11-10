@@ -893,10 +893,6 @@
 								${adminInfo}
 								<div class="top-waiting-tooltip" id="top-waiting-tooltip-${index}">
 									<a href="${item.intercom_url || '#'}" target="_blank" class="tooltip-item">
-										<div class="tooltip-item-header">
-											<span class="tooltip-item-title">${item.title || 'No subject'}</span>
-											<span class="tooltip-item-time">${formattedTime}</span>
-										</div>
 										<div class="tooltip-item-details">
 											<div class="tooltip-item-contact">${contactInfo}</div>
 											<div class="tooltip-item-admin">${assignedInfo}</div>
@@ -929,13 +925,8 @@
 							const contactInfo = conv.contact_email 
 								? `${conv.contact_name} (${conv.contact_email})`
 								: conv.contact_name;
-							const formattedTime = formatWaitTime(conv.wait_minutes);
 							return `
 								<a href="${conv.intercom_url}" target="_blank" class="tooltip-item">
-									<div class="tooltip-item-header">
-										<span class="tooltip-item-title">${conv.title}</span>
-										<span class="tooltip-item-time">${formattedTime}</span>
-									</div>
 									<div class="tooltip-item-details">
 										<div class="tooltip-item-contact">${contactInfo}</div>
 										<div class="tooltip-item-admin">${adminInfo}</div>
@@ -973,10 +964,6 @@
 							const priorityBadge = conv.priority ? '<span class="top-waiting-priority-badge" style="margin-left: 8px;">PRIORITY</span>' : '';
 							return `
 								<a href="${conv.intercom_url || '#'}" target="_blank" class="tooltip-item">
-									<div class="tooltip-item-header">
-										<span class="tooltip-item-title">${conv.title || 'No subject'}</span>
-										<span class="tooltip-item-time">${formattedTime}${priorityBadge}</span>
-									</div>
 									<div class="tooltip-item-details">
 										<div class="tooltip-item-contact">${contactInfo}</div>
 										<div class="tooltip-item-admin">Unassigned</div>
