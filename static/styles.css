@@ -209,6 +209,7 @@ body {
 	grid-template-columns: 2fr 1fr 1fr;
 	gap: 16px;
 	margin-bottom: 24px;
+	align-items: stretch;
 }
 .kpi-card {
 	background: var(--card);
@@ -218,6 +219,9 @@ body {
 	border: 1px solid rgba(255,255,255,0.06);
 	min-height: 100px;
 	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 }
 .kpi-loading-spinner {
 	position: absolute;
@@ -238,7 +242,7 @@ body {
 }
 .kpi-waiting-featured {
 	min-height: 140px;
-	max-height: 500px;
+	height: 100%;
 	padding: 24px;
 	display: flex;
 	flex-direction: column;
