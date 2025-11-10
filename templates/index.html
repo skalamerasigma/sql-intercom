@@ -42,6 +42,7 @@
 		
 		<section class="kpis">
 			<div class="kpi-card kpi-waiting kpi-waiting-featured" id="kpi-waiting-card">
+				<div class="kpi-loading-spinner" id="kpi-waiting-spinner"></div>
 				<div class="kpi-waiting-content">
 					<div class="kpi-waiting-left">
 						<div class="kpi-title">Waiting 1st Reply</div>
@@ -78,6 +79,7 @@
 				</div>
 			</div>
 			<div class="kpi-card kpi-capacity" id="kpi-capacity-card">
+				<div class="kpi-loading-spinner" id="kpi-capacity-spinner"></div>
 				<div class="kpi-title">Capacity Status</div>
 				<div class="capacity-content">
 					<div class="capacity-status-indicator" id="capacity-status-indicator">
@@ -122,7 +124,8 @@
 					</div>
 				</div>
 			</div>
-			<div class="kpi-card kpi-open-snoozed">
+			<div class="kpi-card kpi-open-snoozed" id="kpi-open-snoozed-card">
+				<div class="kpi-loading-spinner" id="kpi-open-snoozed-spinner"></div>
 				<div class="kpi-title">Open vs Snoozed</div>
 				<div class="open-snoozed-visualization">
 					<svg class="open-snoozed-chart" id="open-snoozed-chart" viewBox="0 0 200 200">
@@ -149,7 +152,8 @@
 		</section>
 
 		<section class="stats-grid">
-			<div class="panel">
+			<div class="panel" id="wait-times-panel">
+				<div class="kpi-loading-spinner" id="wait-times-spinner"></div>
 				<div class="panel-title">Wait Times</div>
 				<div class="metric-row">
 					<div class="metric">
@@ -180,7 +184,8 @@
 					</svg>
 				</div>
 			</div>
-			<div class="panel">
+			<div class="panel" id="sla-panel">
+				<div class="kpi-loading-spinner" id="sla-spinner"></div>
 				<div class="panel-title">SLA (First Response ≤ <span id="sla-min">—</span>m)</div>
 				<div class="metric-row">
 					<div class="metric">
@@ -211,7 +216,8 @@
 					</svg>
 				</div>
 			</div>
-			<div class="panel">
+			<div class="panel" id="ratings-panel">
+				<div class="kpi-loading-spinner" id="ratings-spinner"></div>
 				<div class="panel-title">Ratings</div>
 				<div class="ratings-container">
 					<div class="gauge-wrapper">
@@ -643,7 +649,13 @@
 			}
 			
 			// Update metrics
-			setText("capacity-available", `${cap.available_capacity || 0} / ${cap.total_capacity || 0}`);
+			const totalCapacity = cap.total_capacity || 0;
+			const availableCapacity = cap.available_capacity || 0;
+			if (totalCapacity === 0) {
+				setText("capacity-available", "No TSEs Available");
+			} else {
+				setText("capacity-available", `${availableCapacity} / ${totalCapacity}`);
+			}
 			const utilization = Math.min(100, Math.max(0, cap.utilization_percent || 0)); // Cap at 100%
 			setText("capacity-utilization", `${utilization.toFixed(1)}%`);
 			setText("capacity-at-capacity", `${cap.at_capacity_tse_count || 0}`);
@@ -782,8 +794,28 @@
 
 		async function hydrate() {
 			try {
+				// Show loading spinners
+				const spinners = [
+					'kpi-waiting-spinner',
+					'kpi-capacity-spinner',
+					'kpi-open-snoozed-spinner',
+					'wait-times-spinner',
+					'sla-spinner',
+					'ratings-spinner'
+				];
+				spinners.forEach(id => {
+					const spinner = document.getElementById(id);
+					if (spinner) spinner.style.display = 'block';
+				});
+
 				const [data, adminsData, capacityData] = await Promise.all([fetchMetrics(), fetchAdmins(), fetchCapacity()]);
 				document.getElementById("error").style.display = "none";
+				
+				// Hide loading spinners
+				spinners.forEach(id => {
+					const spinner = document.getElementById(id);
+					if (spinner) spinner.style.display = 'none';
+				});
 				
 				// Update timestamp
 				const timestampEl = document.getElementById("kpi-waiting-timestamp");
