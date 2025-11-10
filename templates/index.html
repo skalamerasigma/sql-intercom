@@ -878,28 +878,14 @@
 						const priorityClass = item.priority ? ' top-waiting-item-priority' : '';
 						const formattedTime = formatWaitTime(item.wait_minutes);
 						
-						// Build tooltip content
-						const contactInfo = item.contact_email 
-							? `${item.contact_name} (${item.contact_email})`
-							: item.contact_name;
-						const assignedInfo = item.assigned && item.admin_name 
-							? `Assigned to ${item.admin_name}`
-							: 'Unassigned';
-						
 						return `
-							<div class="top-waiting-item${priorityClass} top-waiting-item-with-tooltip" data-index="${index}">
-								<span class="top-waiting-time">${formattedTime}</span>
-								${priorityBadge}
-								${adminInfo}
-								<div class="top-waiting-tooltip" id="top-waiting-tooltip-${index}">
-									<a href="${item.intercom_url || '#'}" target="_blank" class="tooltip-item">
-										<div class="tooltip-item-details">
-											<div class="tooltip-item-contact">${contactInfo}</div>
-											<div class="tooltip-item-admin">${assignedInfo}</div>
-										</div>
-									</a>
+							<a href="${item.intercom_url || '#'}" target="_blank" class="top-waiting-item${priorityClass}" data-index="${index}">
+								<div class="top-waiting-item-content">
+									<span class="top-waiting-time">${formattedTime}</span>
+									${priorityBadge}
+									${adminInfo}
 								</div>
-							</div>
+							</a>
 						`;
 					}).join('');
 				}

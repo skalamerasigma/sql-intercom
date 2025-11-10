@@ -238,7 +238,7 @@ body {
 }
 .kpi-waiting-featured {
 	min-height: 140px;
-	max-height: 600px;
+	max-height: 500px;
 	padding: 24px;
 	display: flex;
 	flex-direction: column;
@@ -248,9 +248,11 @@ body {
 	display: grid;
 	grid-template-columns: 1fr 1px 1fr;
 	gap: 0;
-	height: 100%;
+	flex: 1;
 	min-height: 0;
+	max-height: 100%;
 	align-items: stretch;
+	overflow: visible;
 }
 .kpi-waiting-left {
 	display: flex;
@@ -406,6 +408,8 @@ body {
 	padding-left: 32px;
 	min-height: 0;
 	flex: 1;
+	overflow: visible;
+	position: relative;
 }
 .top-waiting-title {
 	font-size: 11px;
@@ -419,10 +423,12 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	flex: 1;
+	flex: 1 1 0;
 	min-height: 0;
+	max-height: 100%;
 	overflow-y: auto;
-	overflow-x: hidden;
+	overflow-x: visible;
+	position: relative;
 }
 .top-waiting-list::-webkit-scrollbar {
 	width: 6px;
@@ -440,43 +446,27 @@ body {
 }
 .top-waiting-item {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	flex-direction: column;
 	font-size: 13px;
 	padding: 6px 0;
 	border-bottom: 1px solid rgba(255,255,255,0.05);
-	gap: 8px;
+	gap: 0;
 	position: relative;
 	cursor: pointer;
+	text-decoration: none;
+	color: inherit;
+	transition: opacity 0.2s ease, background-color 0.2s ease;
 }
-.top-waiting-item-with-tooltip:hover {
+.top-waiting-item:hover {
 	opacity: 0.9;
+	background-color: rgba(255, 255, 255, 0.05);
 }
-.top-waiting-tooltip {
-	position: absolute;
-	bottom: 100%;
-	left: 50%;
-	transform: translateX(-50%);
-	margin-bottom: 8px;
-	background: var(--card);
-	border: 1px solid rgba(255,255,255,0.15);
-	border-radius: 8px;
-	box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-	padding: 0;
-	min-width: 280px;
-	max-width: 400px;
-	opacity: 0;
-	visibility: hidden;
-	transform: translateX(-50%) translateY(4px);
-	transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-	z-index: 1000;
-	pointer-events: none;
-}
-.top-waiting-item-with-tooltip:hover .top-waiting-tooltip {
-	opacity: 1;
-	visibility: visible;
-	transform: translateX(-50%) translateY(0);
-	pointer-events: auto;
+.top-waiting-item-content {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
 }
 .top-waiting-item-priority {
 	background: rgba(253, 135, 137, 0.1);
