@@ -111,6 +111,7 @@ def calculate_capacity_metrics(
 		capacity_needed_1h,
 		capacity_needed_2h,
 		waiting_first_reply_count,
+		total_capacity,  # Pass total_capacity to calculate overload
 	)
 	
 	return {
@@ -212,6 +213,7 @@ def determine_alert_level_and_recommendation(
 	capacity_needed_1h: int,
 	capacity_needed_2h: int,
 	waiting_first_reply_count: int = 0,
+	total_capacity: int = 0,  # Add total_capacity to calculate overload
 ) -> Tuple[str, str, Dict[str, Any]]:
 	"""
 	Determine alert level and generate recommendation.
@@ -236,7 +238,7 @@ def determine_alert_level_and_recommendation(
 			alert_level = "green"
 			status = "Optimal"
 			urgency = "low"
-	elif utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or waiting_count > 12 or (available_tse_count > 0 and at_capacity_tse_count >= (available_tse_count * 0.5)):
+	elif utilization_ratio >= CAPACITY_CRITICAL_THRESHOLD or waiting_count >= 5 or (available_tse_count > 0 and at_capacity_tse_count >= (available_tse_count * 0.5)):
 		alert_level = "red"
 		status = "Critical"
 		urgency = "critical"
@@ -253,8 +255,17 @@ def determine_alert_level_and_recommendation(
 		status = "Optimal"
 		urgency = "low"
 	
+	# Calculate current overload (if current_load exceeds capacity)
+	current_overload = max(0, (utilization_percent / 100.0) * total_capacity - total_capacity) if utilization_percent > 100 else 0
+	# Alternative: calculate overload from available_capacity being negative
+	# If available_capacity < 0, we're overloaded
+	overload_chats = max(0, -available_capacity) if available_capacity < 0 else 0
+	tse_needed_for_overload = math.ceil(overload_chats / MAX_CHATS_PER_TSE) if MAX_CHATS_PER_TSE > 0 and overload_chats > 0 else 0
+	
 	# Generate recommendation
+	# Need enough TSEs to handle projected load, plus any current overload
 	additional_tse_needed = max(0, capacity_needed_1h - available_tse_count)
+	total_tse_needed = max(additional_tse_needed, tse_needed_for_overload)
 	
 	if alert_level == "red":
 		action = "add_tse"
@@ -269,10 +280,13 @@ def determine_alert_level_and_recommendation(
 				count = max(capacity_needed_1h, 1)  # Ensure at least 1
 			reason = f"No TSE's available. {waiting_count} conversation{'s' if waiting_count != 1 else ''} waiting for first reply need immediate attention."
 		else:
-			count = max(additional_tse_needed, 1)  # At least 1
+			count = max(total_tse_needed, 1)  # At least 1, account for current overload
 			reason = "Critical capacity threshold exceeded. Immediate action required."
+			# Add context about current overload if applicable
+			if overload_chats > 0:
+				reason += f" Currently {overload_chats} chat{'s' if overload_chats != 1 else ''} over capacity."
 			# Add waiting count context if significant
-			if waiting_count > 5:
+			if waiting_count >= 5:
 				reason += f" {waiting_count} conversation{'s' if waiting_count != 1 else ''} waiting for first reply."
 	elif alert_level == "orange":
 		action = "add_tse" if additional_tse_needed > 0 else "monitor"

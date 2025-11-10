@@ -1,0 +1,626 @@
+{
+  "summary": {
+    "common_months": 70,
+    "date_range": {
+      "start": "2020-02",
+      "end": "2025-11"
+    },
+    "avg_monthly_mrr": 3347149.4159999993,
+    "avg_monthly_conversations": 182.4142857142857,
+    "avg_daily_conversations": 7.868151809181317,
+    "conversations_per_mrr": 5.449839939690513e-05,
+    "conversations_per_account": 0.2969258673611757
+  },
+  "correlations": {
+    "mrr_vs_total_conversations": {
+      "coefficient": 0.805221007885567,
+      "strength": "Strong",
+      "stats": {
+        "correlation": 0.805221007885567,
+        "sample_size": 70,
+        "mean_x": 3347149.4159999993,
+        "mean_y": 182.4142857142857,
+        "std_x": 3526082.441903736,
+        "std_y": 156.92761119471456,
+        "min_x": 71843.0,
+        "max_x": 12150436.929999998,
+        "min_y": 20,
+        "max_y": 849
+      }
+    },
+    "mrr_vs_avg_daily_conversations": {
+      "coefficient": 0.8675119734256415,
+      "strength": "Strong",
+      "stats": {
+        "correlation": 0.8675119734256415,
+        "sample_size": 70,
+        "mean_x": 3347149.4159999993,
+        "mean_y": 7.868151809181317,
+        "std_x": 3526082.441903736,
+        "std_y": 5.903950846726093,
+        "min_x": 71843.0,
+        "max_x": 12150436.929999998,
+        "min_y": 1.5333333333333334,
+        "max_y": 28.3
+      }
+    },
+    "account_count_vs_conversations": {
+      "coefficient": 0.7836146494112637,
+      "strength": "Strong",
+      "stats": {
+        "correlation": 0.7836146494112637,
+        "sample_size": 70,
+        "mean_x": 614.3428571428572,
+        "mean_y": 182.4142857142857,
+        "std_x": 485.8575232712309,
+        "std_y": 156.92761119471456,
+        "min_x": 75,
+        "max_x": 1589,
+        "min_y": 20,
+        "max_y": 849
+      }
+    }
+  },
+  "monthly_data": [
+    {
+      "month": "2020-02",
+      "total_mrr": 71843.0,
+      "total_conversations": 64,
+      "avg_daily_conversations": 2.782608695652174,
+      "account_count": 75,
+      "avg_mrr_per_account": 957.9066666666666
+    },
+    {
+      "month": "2020-03",
+      "total_mrr": 74295.0,
+      "total_conversations": 53,
+      "avg_daily_conversations": 2.9444444444444446,
+      "account_count": 76,
+      "avg_mrr_per_account": 977.5657894736842
+    },
+    {
+      "month": "2020-04",
+      "total_mrr": 89327.0,
+      "total_conversations": 48,
+      "avg_daily_conversations": 2.2857142857142856,
+      "account_count": 82,
+      "avg_mrr_per_account": 1089.3536585365853
+    },
+    {
+      "month": "2020-05",
+      "total_mrr": 103488.0,
+      "total_conversations": 23,
+      "avg_daily_conversations": 1.5333333333333334,
+      "account_count": 87,
+      "avg_mrr_per_account": 1189.5172413793102
+    },
+    {
+      "month": "2020-06",
+      "total_mrr": 124842.0,
+      "total_conversations": 39,
+      "avg_daily_conversations": 2.6,
+      "account_count": 87,
+      "avg_mrr_per_account": 1434.9655172413793
+    },
+    {
+      "month": "2020-07",
+      "total_mrr": 131287.0,
+      "total_conversations": 38,
+      "avg_daily_conversations": 1.8095238095238095,
+      "account_count": 89,
+      "avg_mrr_per_account": 1475.1348314606741
+    },
+    {
+      "month": "2020-08",
+      "total_mrr": 139437.0,
+      "total_conversations": 33,
+      "avg_daily_conversations": 1.8333333333333333,
+      "account_count": 94,
+      "avg_mrr_per_account": 1483.372340425532
+    },
+    {
+      "month": "2020-09",
+      "total_mrr": 146646.0,
+      "total_conversations": 25,
+      "avg_daily_conversations": 1.7857142857142858,
+      "account_count": 95,
+      "avg_mrr_per_account": 1543.6421052631579
+    },
+    {
+      "month": "2020-10",
+      "total_mrr": 168020.0,
+      "total_conversations": 25,
+      "avg_daily_conversations": 1.9230769230769231,
+      "account_count": 101,
+      "avg_mrr_per_account": 1663.5643564356435
+    },
+    {
+      "month": "2020-11",
+      "total_mrr": 187211.0,
+      "total_conversations": 20,
+      "avg_daily_conversations": 1.8181818181818181,
+      "account_count": 108,
+      "avg_mrr_per_account": 1733.4351851851852
+    },
+    {
+      "month": "2020-12",
+      "total_mrr": 199702.0,
+      "total_conversations": 52,
+      "avg_daily_conversations": 2.736842105263158,
+      "account_count": 113,
+      "avg_mrr_per_account": 1767.274336283186
+    },
+    {
+      "month": "2021-01",
+      "total_mrr": 230702.0,
+      "total_conversations": 34,
+      "avg_daily_conversations": 2.0,
+      "account_count": 124,
+      "avg_mrr_per_account": 1860.5
+    },
+    {
+      "month": "2021-02",
+      "total_mrr": 240997.0,
+      "total_conversations": 45,
+      "avg_daily_conversations": 2.6470588235294117,
+      "account_count": 126,
+      "avg_mrr_per_account": 1912.6746031746031
+    },
+    {
+      "month": "2021-03",
+      "total_mrr": 262539.0,
+      "total_conversations": 57,
+      "avg_daily_conversations": 2.4782608695652173,
+      "account_count": 132,
+      "avg_mrr_per_account": 1988.9318181818182
+    },
+    {
+      "month": "2021-04",
+      "total_mrr": 309710.0,
+      "total_conversations": 73,
+      "avg_daily_conversations": 3.3181818181818183,
+      "account_count": 142,
+      "avg_mrr_per_account": 2181.056338028169
+    },
+    {
+      "month": "2021-05",
+      "total_mrr": 318844.0,
+      "total_conversations": 59,
+      "avg_daily_conversations": 3.2777777777777777,
+      "account_count": 150,
+      "avg_mrr_per_account": 2125.6266666666666
+    },
+    {
+      "month": "2021-06",
+      "total_mrr": 330348.0,
+      "total_conversations": 57,
+      "avg_daily_conversations": 2.7142857142857144,
+      "account_count": 158,
+      "avg_mrr_per_account": 2090.8101265822784
+    },
+    {
+      "month": "2021-07",
+      "total_mrr": 397003.0,
+      "total_conversations": 68,
+      "avg_daily_conversations": 2.8333333333333335,
+      "account_count": 173,
+      "avg_mrr_per_account": 2294.815028901734
+    },
+    {
+      "month": "2021-08",
+      "total_mrr": 458106.0,
+      "total_conversations": 74,
+      "avg_daily_conversations": 3.3636363636363638,
+      "account_count": 179,
+      "avg_mrr_per_account": 2559.2513966480446
+    },
+    {
+      "month": "2021-09",
+      "total_mrr": 485732.0,
+      "total_conversations": 92,
+      "avg_daily_conversations": 4.6,
+      "account_count": 187,
+      "avg_mrr_per_account": 2597.4973262032086
+    },
+    {
+      "month": "2021-10",
+      "total_mrr": 549936.0,
+      "total_conversations": 104,
+      "avg_daily_conversations": 4.521739130434782,
+      "account_count": 203,
+      "avg_mrr_per_account": 2709.0443349753696
+    },
+    {
+      "month": "2021-11",
+      "total_mrr": 567242.0,
+      "total_conversations": 90,
+      "avg_daily_conversations": 4.285714285714286,
+      "account_count": 206,
+      "avg_mrr_per_account": 2753.6019417475727
+    },
+    {
+      "month": "2021-12",
+      "total_mrr": 607565.0,
+      "total_conversations": 73,
+      "avg_daily_conversations": 4.055555555555555,
+      "account_count": 222,
+      "avg_mrr_per_account": 2736.7792792792793
+    },
+    {
+      "month": "2022-01",
+      "total_mrr": 710970.0,
+      "total_conversations": 137,
+      "avg_daily_conversations": 5.956521739130435,
+      "account_count": 248,
+      "avg_mrr_per_account": 2866.814516129032
+    },
+    {
+      "month": "2022-02",
+      "total_mrr": 775780.0,
+      "total_conversations": 106,
+      "avg_daily_conversations": 4.818181818181818,
+      "account_count": 265,
+      "avg_mrr_per_account": 2927.4716981132074
+    },
+    {
+      "month": "2022-03",
+      "total_mrr": 863057.0,
+      "total_conversations": 152,
+      "avg_daily_conversations": 6.608695652173913,
+      "account_count": 287,
+      "avg_mrr_per_account": 3007.1672473867598
+    },
+    {
+      "month": "2022-04",
+      "total_mrr": 1052168.0,
+      "total_conversations": 149,
+      "avg_daily_conversations": 7.095238095238095,
+      "account_count": 320,
+      "avg_mrr_per_account": 3288.025
+    },
+    {
+      "month": "2022-05",
+      "total_mrr": 1128104.0,
+      "total_conversations": 147,
+      "avg_daily_conversations": 6.391304347826087,
+      "account_count": 337,
+      "avg_mrr_per_account": 3347.4896142433236
+    },
+    {
+      "month": "2022-06",
+      "total_mrr": 1180589.0,
+      "total_conversations": 138,
+      "avg_daily_conversations": 5.52,
+      "account_count": 345,
+      "avg_mrr_per_account": 3421.9971014492753
+    },
+    {
+      "month": "2022-07",
+      "total_mrr": 1322322.0,
+      "total_conversations": 155,
+      "avg_daily_conversations": 7.045454545454546,
+      "account_count": 385,
+      "avg_mrr_per_account": 3434.6025974025974
+    },
+    {
+      "month": "2022-08",
+      "total_mrr": 1495903.25,
+      "total_conversations": 119,
+      "avg_daily_conversations": 5.173913043478261,
+      "account_count": 398,
+      "avg_mrr_per_account": 3758.550879396985
+    },
+    {
+      "month": "2022-09",
+      "total_mrr": 1572423.25,
+      "total_conversations": 140,
+      "avg_daily_conversations": 5.833333333333333,
+      "account_count": 411,
+      "avg_mrr_per_account": 3825.847323600973
+    },
+    {
+      "month": "2022-10",
+      "total_mrr": 1722839.25,
+      "total_conversations": 126,
+      "avg_daily_conversations": 5.25,
+      "account_count": 439,
+      "avg_mrr_per_account": 3924.4629840546695
+    },
+    {
+      "month": "2022-11",
+      "total_mrr": 1762588.25,
+      "total_conversations": 130,
+      "avg_daily_conversations": 5.6521739130434785,
+      "account_count": 441,
+      "avg_mrr_per_account": 3996.798752834467
+    },
+    {
+      "month": "2022-12",
+      "total_mrr": 1871292.25,
+      "total_conversations": 183,
+      "avg_daily_conversations": 7.625,
+      "account_count": 457,
+      "avg_mrr_per_account": 4094.7314004376367
+    },
+    {
+      "month": "2023-01",
+      "total_mrr": 2166909.25,
+      "total_conversations": 211,
+      "avg_daily_conversations": 9.173913043478262,
+      "account_count": 519,
+      "avg_mrr_per_account": 4175.162331406551
+    },
+    {
+      "month": "2023-02",
+      "total_mrr": 2227680.25,
+      "total_conversations": 231,
+      "avg_daily_conversations": 9.24,
+      "account_count": 526,
+      "avg_mrr_per_account": 4235.133555133079
+    },
+    {
+      "month": "2023-03",
+      "total_mrr": 2274697.25,
+      "total_conversations": 219,
+      "avg_daily_conversations": 9.125,
+      "account_count": 537,
+      "avg_mrr_per_account": 4235.935288640596
+    },
+    {
+      "month": "2023-04",
+      "total_mrr": 2550153.25,
+      "total_conversations": 193,
+      "avg_daily_conversations": 9.19047619047619,
+      "account_count": 570,
+      "avg_mrr_per_account": 4473.953070175438
+    },
+    {
+      "month": "2023-05",
+      "total_mrr": 2602394.0,
+      "total_conversations": 204,
+      "avg_daily_conversations": 8.5,
+      "account_count": 574,
+      "avg_mrr_per_account": 4533.7874564459935
+    },
+    {
+      "month": "2023-06",
+      "total_mrr": 2760947.0,
+      "total_conversations": 211,
+      "avg_daily_conversations": 9.173913043478262,
+      "account_count": 601,
+      "avg_mrr_per_account": 4593.921797004991
+    },
+    {
+      "month": "2023-07",
+      "total_mrr": 3006761.0,
+      "total_conversations": 189,
+      "avg_daily_conversations": 8.217391304347826,
+      "account_count": 644,
+      "avg_mrr_per_account": 4668.883540372671
+    },
+    {
+      "month": "2023-08",
+      "total_mrr": 3152186.67,
+      "total_conversations": 274,
+      "avg_daily_conversations": 10.148148148148149,
+      "account_count": 662,
+      "avg_mrr_per_account": 4761.611283987915
+    },
+    {
+      "month": "2023-09",
+      "total_mrr": 3271853.67,
+      "total_conversations": 296,
+      "avg_daily_conversations": 12.869565217391305,
+      "account_count": 686,
+      "avg_mrr_per_account": 4769.4659912536445
+    },
+    {
+      "month": "2023-10",
+      "total_mrr": 3678086.3199999994,
+      "total_conversations": 283,
+      "avg_daily_conversations": 11.791666666666666,
+      "account_count": 740,
+      "avg_mrr_per_account": 4970.386918918918
+    },
+    {
+      "month": "2023-11",
+      "total_mrr": 3749919.2099999995,
+      "total_conversations": 259,
+      "avg_daily_conversations": 11.772727272727273,
+      "account_count": 751,
+      "avg_mrr_per_account": 4993.23463382157
+    },
+    {
+      "month": "2023-12",
+      "total_mrr": 3903020.18,
+      "total_conversations": 216,
+      "avg_daily_conversations": 9.818181818181818,
+      "account_count": 782,
+      "avg_mrr_per_account": 4991.074398976983
+    },
+    {
+      "month": "2024-01",
+      "total_mrr": 4389466.8,
+      "total_conversations": 253,
+      "avg_daily_conversations": 11.0,
+      "account_count": 837,
+      "avg_mrr_per_account": 5244.285304659498
+    },
+    {
+      "month": "2024-02",
+      "total_mrr": 4417262.279999999,
+      "total_conversations": 197,
+      "avg_daily_conversations": 8.565217391304348,
+      "account_count": 849,
+      "avg_mrr_per_account": 5202.900212014133
+    },
+    {
+      "month": "2024-03",
+      "total_mrr": 4636853.789999999,
+      "total_conversations": 190,
+      "avg_daily_conversations": 7.6,
+      "account_count": 868,
+      "avg_mrr_per_account": 5341.99745391705
+    },
+    {
+      "month": "2024-04",
+      "total_mrr": 5072401.890000002,
+      "total_conversations": 225,
+      "avg_daily_conversations": 9.375,
+      "account_count": 916,
+      "avg_mrr_per_account": 5537.556648471618
+    },
+    {
+      "month": "2024-05",
+      "total_mrr": 5171805.66,
+      "total_conversations": 205,
+      "avg_daily_conversations": 8.2,
+      "account_count": 932,
+      "avg_mrr_per_account": 5549.147703862661
+    },
+    {
+      "month": "2024-06",
+      "total_mrr": 5343387.200000001,
+      "total_conversations": 157,
+      "avg_daily_conversations": 7.476190476190476,
+      "account_count": 964,
+      "avg_mrr_per_account": 5542.932780082989
+    },
+    {
+      "month": "2024-07",
+      "total_mrr": 5851006.249999998,
+      "total_conversations": 145,
+      "avg_daily_conversations": 6.590909090909091,
+      "account_count": 1027,
+      "avg_mrr_per_account": 5697.182327166503
+    },
+    {
+      "month": "2024-08",
+      "total_mrr": 5982181.83,
+      "total_conversations": 219,
+      "avg_daily_conversations": 8.76,
+      "account_count": 1047,
+      "avg_mrr_per_account": 5713.640716332378
+    },
+    {
+      "month": "2024-09",
+      "total_mrr": 6161505.369999997,
+      "total_conversations": 217,
+      "avg_daily_conversations": 9.041666666666666,
+      "account_count": 1079,
+      "avg_mrr_per_account": 5710.384958294715
+    },
+    {
+      "month": "2024-10",
+      "total_mrr": 6715358.149999997,
+      "total_conversations": 180,
+      "avg_daily_conversations": 6.923076923076923,
+      "account_count": 1156,
+      "avg_mrr_per_account": 5809.133347750862
+    },
+    {
+      "month": "2024-11",
+      "total_mrr": 6829886.899999998,
+      "total_conversations": 188,
+      "avg_daily_conversations": 7.833333333333333,
+      "account_count": 1165,
+      "avg_mrr_per_account": 5862.5638626609425
+    },
+    {
+      "month": "2024-12",
+      "total_mrr": 7064682.170000001,
+      "total_conversations": 162,
+      "avg_daily_conversations": 6.75,
+      "account_count": 1195,
+      "avg_mrr_per_account": 5911.867924686193
+    },
+    {
+      "month": "2025-01",
+      "total_mrr": 8037402.149999997,
+      "total_conversations": 194,
+      "avg_daily_conversations": 8.083333333333334,
+      "account_count": 1303,
+      "avg_mrr_per_account": 6168.382310053719
+    },
+    {
+      "month": "2025-02",
+      "total_mrr": 8099883.219999998,
+      "total_conversations": 174,
+      "avg_daily_conversations": 7.565217391304348,
+      "account_count": 1310,
+      "avg_mrr_per_account": 6183.116961832059
+    },
+    {
+      "month": "2025-03",
+      "total_mrr": 8281118.779999997,
+      "total_conversations": 303,
+      "avg_daily_conversations": 12.12,
+      "account_count": 1331,
+      "avg_mrr_per_account": 6221.727107438014
+    },
+    {
+      "month": "2025-04",
+      "total_mrr": 8951090.379999997,
+      "total_conversations": 339,
+      "avg_daily_conversations": 13.56,
+      "account_count": 1403,
+      "avg_mrr_per_account": 6379.964632929435
+    },
+    {
+      "month": "2025-05",
+      "total_mrr": 9151511.499999996,
+      "total_conversations": 313,
+      "avg_daily_conversations": 13.041666666666666,
+      "account_count": 1416,
+      "avg_mrr_per_account": 6462.9318502824835
+    },
+    {
+      "month": "2025-06",
+      "total_mrr": 9497876.999999996,
+      "total_conversations": 477,
+      "avg_daily_conversations": 19.875,
+      "account_count": 1443,
+      "avg_mrr_per_account": 6582.035343035341
+    },
+    {
+      "month": "2025-07",
+      "total_mrr": 10681796.109999994,
+      "total_conversations": 567,
+      "avg_daily_conversations": 21.0,
+      "account_count": 1539,
+      "avg_mrr_per_account": 6940.738213125402
+    },
+    {
+      "month": "2025-08",
+      "total_mrr": 11215891.9,
+      "total_conversations": 545,
+      "avg_daily_conversations": 20.185185185185187,
+      "account_count": 1554,
+      "avg_mrr_per_account": 7217.433655083655
+    },
+    {
+      "month": "2025-09",
+      "total_mrr": 11557331.219999997,
+      "total_conversations": 782,
+      "avg_daily_conversations": 27.928571428571427,
+      "account_count": 1579,
+      "avg_mrr_per_account": 7319.3991260291305
+    },
+    {
+      "month": "2025-10",
+      "total_mrr": 12150436.929999998,
+      "total_conversations": 849,
+      "avg_daily_conversations": 28.3,
+      "account_count": 1589,
+      "avg_mrr_per_account": 7646.593410950281
+    },
+    {
+      "month": "2025-11",
+      "total_mrr": 12042855.339999998,
+      "total_conversations": 174,
+      "avg_daily_conversations": 24.857142857142858,
+      "account_count": 1568,
+      "avg_mrr_per_account": 7680.392436224489
+    }
+  ]
+}

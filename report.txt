@@ -1,0 +1,70 @@
+================================================================================
+SUPPORT HEADCOUNT FORECASTING REPORT
+================================================================================
+
+HISTORICAL ANALYSIS
+--------------------------------------------------------------------------------
+Data Period: 2018-05-16T00:00:00 to 2025-11-07T00:00:00 (2732 days)
+
+Recent 30-Day Averages:
+  Daily Chats: 28.6
+  CSAT: 4.68
+  SLA Adherence: 50.2%
+
+HOLIDAY IMPACT ANALYSIS
+--------------------------------------------------------------------------------
+
+Thanksgiving:
+  Volume Multiplier: 0.17x
+  CSAT Impact: -0.78
+  SLA Impact: +0.0%
+  Sample Size: 3 days
+
+Day After Thanksgiving:
+  Volume Multiplier: 0.13x
+  CSAT Impact: +0.22
+  SLA Impact: +0.0%
+  Sample Size: 4 days
+
+Thanksgiving Week:
+  Volume Multiplier: 0.73x
+  CSAT Impact: +0.03
+  SLA Impact: +12.0%
+  Sample Size: 16 days
+
+Christmas:
+  Volume Multiplier: 0.39x
+  CSAT Impact: +0.22
+  SLA Impact: -18.9%
+  Sample Size: 2 days
+
+Holiday Break:
+  Volume Multiplier: 0.44x
+  CSAT Impact: +0.11
+  SLA Impact: +7.5%
+  Sample Size: 34 days
+
+REVENUE CORRELATION
+--------------------------------------------------------------------------------
+MRR-Chat Volume Correlation: 0.868
+Growth Rate Correlation: 0.102
+Chats per $1M MRR: 2.4
+
+New Customer-Chat Volume Correlation: 0.438
+Chats per New Customer: 0.3
+
+FORECAST SUMMARY
+--------------------------------------------------------------------------------
+Forecast Period: 2025-11-08 to 2026-02-05
+
+Average Daily Projections:
+  Chats: 23.2
+  Required Headcount: 3.7
+
+Headcount Range: 2 - 5
+
+Holiday Periods (19 days):
+  Average Headcount: 3.1
+  Max Headcount: 4
+
+================================================================================

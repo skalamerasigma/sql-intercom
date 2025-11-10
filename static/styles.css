@@ -569,25 +569,38 @@ body {
 	font-weight: 700;
 	color: var(--text);
 }
-.capacity-metrics-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 12px;
-}
-.capacity-metric {
+.capacity-visual-metrics {
 	display: flex;
 	flex-direction: column;
+	gap: 16px;
+	align-items: center;
+}
+.capacity-utilization-gauge-wrapper {
+	width: 100%;
+	max-width: 200px;
+}
+.capacity-utilization-gauge {
+	width: 100%;
+	height: auto;
+}
+#utilization-gauge-arc {
+	transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;
+}
+.capacity-at-capacity-display {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 	gap: 4px;
 }
-.capacity-metric-label {
+.capacity-at-capacity-label {
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
 	opacity: 0.7;
 	color: var(--text);
 }
-.capacity-metric-value {
-	font-size: 20px;
+.capacity-at-capacity-value {
+	font-size: 32px;
 	font-weight: 700;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 	color: var(--text);
@@ -653,6 +666,11 @@ body {
 	gap: 8px;
 	font-size: 13px;
 	color: var(--text);
+}
+.legend-item-snoozed-returning {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 .legend-color {
 	width: 12px;
